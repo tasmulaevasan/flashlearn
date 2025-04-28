@@ -1,2 +1,2 @@
 # flashlearn
-Skillset AI Hackathon 2025"
+Skillset AI Hackathon 2025
