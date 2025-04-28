@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-lang-key="html-title">Физика: Карточки и Задачи</title>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* --- Стили (дополнены) --- */
+        :root {
+            --primary-color: #007bff; --secondary-color: #6c757d;
+            --background-light: #f8f9fa; --text-dark: #212529; --text-light: #f8f9fa;
+            --success-color: #28a745; --error-color: #dc3545;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); --transition-speed: 0.3s;
+            --card-bg-front: #ffffff; --card-bg-back: #e9ecef;
+            --card-text-front: var(--text-dark); --card-text-back: var(--text-dark);
+            --timer-color: var(--secondary-color);
+        }
+        .dark-mode {
+            --primary-color: #4dabf7; --secondary-color: #adb5bd;
+            --background-light: #1a1a1a; --text-dark: #e9ecef; --text-light: #343a40;
+            --card-shadow: 0 4px 12px rgba(255, 255, 255, 0.08);
+            --card-bg-front: #2b2b2b; --card-bg-back: #3a3a3a;
+            --card-text-front: var(--text-dark); --card-text-back: var(--text-dark);
+            --timer-color: var(--secondary-color);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { background-color: var(--background-light); color: var(--text-dark); transition: background-color var(--transition-speed), color var(--transition-speed); min-height: 100vh; display: flex; flex-direction: column; font-size: 16px; }
+        header { background: linear-gradient(135deg, var(--primary-color), #0056b3); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+        header h1 { font-size: 2rem; margin-bottom: 0.3rem;}
+        header p { font-size: 1rem; opacity: 0.9; }
+        .container { width: 90%; max-width: 1200px; margin: 2rem auto; padding: 0 1rem; flex: 1; }
+
+        /* Панель настроек */
+        .settings-bar { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid #dee2e6; margin-bottom: 1rem; background-color: var(--card-bg-front); border-radius: 8px; box-shadow: var(--card-shadow); } /* Reduced margin-bottom */
+        .dark-mode .settings-bar { border-bottom-color: #444; }
+        .settings-left, .settings-right { display: flex; gap: 0.8rem; align-items: center; }
+        .theme-toggle, .language-toggle { background: none; border: none; cursor: pointer; font-size: 1.6rem; color: var(--secondary-color); padding: 0.3rem; transition: color 0.2s; }
+        .theme-toggle:hover, .language-toggle:hover { color: var(--primary-color); }
+        .language-dropdown { position: relative; display: inline-block; }
+        .language-menu { display: none; position: absolute; right: 0; top: 110%; margin-top: 5px; background-color: var(--card-bg-front); color: var(--card-text-front); min-width: 120px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 8px; z-index: 100; border: 1px solid #eee; }
+        .dark-mode .language-menu { border-color: #444; }
+        .language-menu.show { display: block; }
+        .language-option { padding: 0.8rem 1rem; cursor: pointer; transition: background-color 0.2s; font-size: 0.95rem; }
+        .language-option:hover { background-color: rgba(0, 123, 255, 0.1); }
+        .dark-mode .language-option:hover { background-color: rgba(77, 171, 247, 0.15); }
+
+        /* Отображение текущей колоды */
+        #currentDeckDisplay { text-align: center; margin-bottom: 1.5rem; font-size: 0.95rem; color: var(--secondary-color); }
+        #currentDeckDisplay span { font-weight: 600; color: var(--text-dark); }
+        .dark-mode #currentDeckDisplay span { color: var(--text-dark); }
+
+
+        /* Кнопки общие */
+        button, .button-style { background-color: var(--primary-color); color: white; border: none; padding: 0.7rem 1.3rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; transition: background-color 0.2s, transform 0.1s, opacity 0.2s, box-shadow 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; text-align: center; justify-content: center; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button:hover:not(:disabled), .button-style:hover:not(:disabled) { background-color: #0056b3; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .dark-mode button:hover:not(:disabled), .dark-mode .button-style:hover:not(:disabled) { background-color: #69b7f9; }
+        button:active:not(:disabled), .button-style:active:not(:disabled) { transform: scale(0.98); box-shadow: none; }
+        button:disabled, .button-style:disabled { opacity: 0.6; cursor: not-allowed; background-color: #adb5bd !important; color: #fff !important; border-color: transparent !important; box-shadow: none; }
+        .button-secondary { background-color: var(--secondary-color); }
+        .button-secondary:hover:not(:disabled) { background-color: #5a6268; }
+        .button-outline { background-color: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); box-shadow: none; }
+        .button-outline:hover:not(:disabled) { background-color: rgba(0, 123, 255, 0.1); }
+        .dark-mode .button-outline { color: var(--primary-color); border-color: var(--primary-color); }
+        .dark-mode .button-outline:hover:not(:disabled) { background-color: rgba(77, 171, 247, 0.15); }
+        .button-outline:disabled { border-color: #ccc !important; color: #aaa !important; background-color: transparent !important; opacity: 0.5; }
+
+        /* Режимы обучения */
+        .study-modes { display: flex; justify-content: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; } /* Reduced margin */
+        .mode-card { background-color: var(--card-bg-front); color: var(--card-text-front); border-radius: 10px; padding: 1.5rem; width: 200px; text-align: center; cursor: pointer; box-shadow: var(--card-shadow); transition: transform 0.3s, border-color 0.3s, opacity 0.3s; border: 2px solid transparent; }
+        .mode-card:hover:not(.disabled) { transform: translateY(-5px); border-color: var(--secondary-color); }
+        .mode-card.active { border-color: var(--primary-color); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0, 123, 255, 0.2); }
+        .mode-card.disabled { opacity: 0.4; cursor: not-allowed; background-color: #eee; border-color: transparent; transform: none; box-shadow: none; pointer-events: none; }
+        .dark-mode .mode-card.disabled { background-color: #333; }
+        .mode-icon { font-size: 2.2rem; margin-bottom: 1rem; color: var(--primary-color); }
+        .mode-card h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+        .mode-card p { font-size: 0.9rem; color: #6c757d; }
+        .dark-mode .mode-card p { color: #adb5bd; }
+
+        /* Прогресс и Таймер */
+        .progress-timer-container { display: flex; justify-content: space-between; align-items: center; max-width: 700px; margin: 0 auto 2rem; gap: 1rem; }
+        .progress-container { flex-grow: 1; background-color: #e9ecef; border-radius: 10px; overflow: hidden; height: 12px; }
+        .dark-mode .progress-container { background-color: #3a3a3a; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary-color), #0056b3); transition: width 0.3s ease; width: 0%; border-radius: 10px; }
+        #timerDisplay { font-size: 1rem; color: var(--timer-color); font-weight: 500; min-width: 50px; text-align: right; visibility: hidden; /* Hidden by default */ }
+        #timerDisplay.visible { visibility: visible; }
+
+
+        /* Область карточки */
+        .flashcard-area { perspective: 1000px; min-height: 380px; margin-bottom: 2rem; }
+        .flashcard-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .flashcard { width: 700px; max-width: 100%; height: 380px; position: relative; cursor: pointer; transform-style: preserve-3d; transition: transform 0.6s; box-shadow: var(--card-shadow); border-radius: 12px; }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 2.5rem; border-radius: 12px; text-align: center; overflow-y: auto; border: 1px solid #eee;}
+        .flashcard-front { background-color: var(--card-bg-front); color: var(--card-text-front); }
+        .flashcard-back { transform: rotateY(180deg); background-color: var(--card-bg-back); color: var(--card-text-back); }
+        .dark-mode .flashcard-front, .dark-mode .flashcard-back { border-color: #333; }
+        .flashcard-term-topic { font-size: 1.8rem; margin-bottom: 0.8rem; font-weight: 600; color: var(--primary-color); }
+        .flashcard-term-prompt { font-size: 1rem; color: #6c757d; margin-bottom: 1rem; }
+        .dark-mode .flashcard-term-prompt { color: #adb5bd; }
+        .flashcard-back-section { margin-bottom: 0.8rem; width: 100%; text-align: left; padding-left: 1rem;}
+        .flashcard-back-section strong { display: block; margin-bottom: 0.3rem; font-size: 0.95rem; color: var(--primary-color); font-weight: 600;}
+        .flashcard-back-content { font-size: 1rem; line-height: 1.6; }
+        .flashcard-problem-text { font-size: 1.15rem; line-height: 1.65; text-align: left; width: 100%; margin-top: 0.5rem;}
+        .flashcard-problem-answer { font-size: 1.6rem; font-weight: bold; color: var(--success-color); margin-top: 1.5rem; }
+        @keyframes cardEntrance { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .card-animation { animation: cardEntrance 0.4s ease-out; }
+
+        /* Режим Теста */
+        .quiz-options { display: none; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 1.5rem; max-width: 700px; margin-left: auto; margin-right: auto;}
+        .quiz-option { flex-basis: calc(50% - 1rem); text-align: center; }
+        .quiz-option.correct { background-color: var(--success-color); color: white; border-color: var(--success-color); }
+        .quiz-option.incorrect { background-color: var(--error-color); color: white; border-color: var(--error-color); }
+
+        /* Режим Задачи */
+        .problem-solver { display: none; width: 100%; max-width: 700px; margin: 1.5rem auto; text-align: center; }
+        .problem-solver label { display: block; margin-bottom: 0.8rem; font-size: 1rem; font-weight: 500; }
+        .problem-solver input[type="number"], .problem-solver input[type="text"] { width: 60%; padding: 0.8rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1.1rem; text-align: center; background-color: var(--card-bg-front); color: var(--card-text-front); margin: 0 auto 1rem auto; display: block; }
+        .dark-mode .problem-solver input { border-color: #555; background-color: #2b2b2b; }
+        .problem-solver input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .submit-answer { width: auto; min-width: 150px; }
+
+        /* Обратная связь */
+        .answer-feedback { display: none; margin-top: 1.5rem; padding: 1rem 1.5rem; border-radius: 8px; text-align: center; font-weight: 500; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; font-size: 1.05rem; }
+        .answer-feedback.correct { background-color: rgba(40, 167, 69, 0.1); color: var(--success-color); border: 1px solid rgba(40, 167, 69, 0.3); }
+        .answer-feedback.incorrect { background-color: rgba(220, 53, 69, 0.1); color: var(--error-color); border: 1px solid rgba(220, 53, 69, 0.3); }
+        .answer-feedback .correct-answer-text { font-weight: bold; margin-left: 5px;}
+
+        /* Кнопки управления */
+        .controls { display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; flex-wrap: wrap; }
+
+        /* Секция статистики */
+        .stats-section { background-color: var(--card-bg-front); color: var(--card-text-front); padding: 1.5rem 2rem; border-radius: 12px; margin-top: 2.5rem; box-shadow: var(--card-shadow); border: 1px solid #eee;}
+        .dark-mode .stats-section { border-color: #333; }
+        .stats-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+        .dark-mode .stats-header { border-bottom-color: #444; }
+        .stats-header h2 { font-size: 1.4rem; margin: 0; }
+        #resetStatsBtn { font-size: 0.85rem; padding: 0.5rem 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+        .stat-card { background-color: var(--background-light); color: var(--text-dark); padding: 1rem; border-radius: 8px; text-align: center; border: 1px solid #eee;}
+        .dark-mode .stat-card { background-color: #252525; border-color: #444; }
+        .stat-value { font-size: 1.8rem; font-weight: 600; color: var(--primary-color); margin-bottom: 0.5rem; }
+        .stat-label { color: var(--secondary-color); font-size: 0.85rem; text-transform: uppercase; }
+        .dark-mode .stat-label { color: #adb5bd; }
+
+        /* Модальные окна */
+        .modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow-y: auto; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); animation: fadeIn 0.3s ease; align-items: center; justify-content: center; padding: 1rem; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content { background-color: var(--card-bg-front); color: var(--card-text-front); padding: 2rem; border-radius: 12px; width: 90%; max-width: 700px; max-height: 90vh; overflow-y: auto; position: relative; animation: slideIn 0.3s ease-out; margin: auto; }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+        .dark-mode .modal-header { border-bottom-color: #444;}
+        .modal-header h2 { font-size: 1.5rem; margin: 0; }
+        .close-modal { background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--secondary-color); padding: 0; line-height: 1; opacity: 0.7; position: absolute; top: 1rem; right: 1.5rem;}
+        .close-modal:hover { opacity: 1; color: var(--error-color); }
+
+        /* Список колод */
+        .deck-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; list-style: none; padding: 0;}
+        .deck-item { background-color: var(--background-light); color: var(--text-dark); padding: 1.2rem; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; border: 1px solid #eee; }
+        .dark-mode .deck-item { background-color: #252525; border-color: #444; }
+        .deck-item:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); border-color: var(--primary-color); }
+        .deck-title { font-weight: 600; font-size: 1.15rem; margin-bottom: 0.5rem; color: var(--primary-color); }
+        .deck-info { color: #555; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .dark-mode .deck-info { color: #bbb; }
+        .delete-deck-btn { position: absolute; top: 8px; right: 8px; background: rgba(220, 53, 69, 0.1); color: var(--error-color); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 50%; width: 28px; height: 28px; font-size: 1rem; line-height: 28px; text-align: center; cursor: pointer; opacity: 0.8; transition: opacity 0.2s, background-color 0.2s; padding: 0; }
+        .deck-item:hover .delete-deck-btn { opacity: 1; background: rgba(220, 53, 69, 0.2); }
+
+        /* Форма создания колоды */
+        .create-deck-form label { display: block; margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; }
+        .create-deck-form select { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; background-color: var(--background-light); color: var(--text-dark); margin-bottom: 1rem; }
+        .dark-mode .create-deck-form select { background-color: #252525; border-color: #555; }
+        .create-deck-form input[type="text"], .create-deck-form textarea { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; background-color: var(--background-light); color: var(--text-dark); margin-bottom: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .dark-mode .create-deck-form input[type="text"], .dark-mode .create-deck-form textarea { background-color: #252525; border-color: #555;}
+        .create-deck-form input[type="text"]:focus, .create-deck-form textarea:focus, .create-deck-form select:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .create-deck-form textarea { min-height: 80px; resize: vertical; }
+        .create-deck-form button[type="submit"] { margin-top: 1.5rem; width: 100%; font-size: 1.1rem; padding: 0.9rem 1.5rem; }
+        .add-card-section { border-top: 1px solid #eee; margin-top: 2rem; padding-top: 1.5rem; }
+        .dark-mode .add-card-section { border-top-color: #444;}
+        .add-card-section h3 { margin-bottom: 1rem; font-size: 1.3rem; }
+        .term-inputs, .problem-inputs { border: 1px solid #eee; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 8px; background-color: rgba(0,0,0,0.02); position: relative; }
+        .dark-mode .term-inputs, .dark-mode .problem-inputs { background-color: rgba(255,255,255,0.04); border-color: #444;}
+        .term-inputs h4, .problem-inputs h4 { margin-bottom: 1rem; font-size: 1.1rem; color: var(--primary-color); }
+        .delete-term-btn, .delete-problem-btn { position: absolute; top: 10px; right: 10px; background: transparent; color: var(--error-color); border: none; padding: 0.2rem 0.5rem; font-size: 1.4rem; cursor: pointer; line-height: 1; opacity: 0.6; transition: opacity 0.2s; }
+        .delete-term-btn:hover, .delete-problem-btn:hover { opacity: 1; }
+        #addAnotherTermBtn, #addAnotherProblemBtn { width: 100%; margin-top: 0.5rem; }
+
+
+        /* Значки */
+        .badge-earned { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background-color: rgba(0,0,0,0.85); color: white; padding: 2rem 3rem; border-radius: 12px; text-align: center; z-index: 1100; display: none; animation: badgeEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes badgeEntrance { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+        .badge-icon { font-size: 3rem; color: gold; margin-bottom: 1rem; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .badge-earned h3 { margin-bottom: 0.5rem; font-size: 1.4rem; }
+        .badge-earned p { font-size: 1rem; opacity: 0.9; }
+
+        /* Модальное окно Достижений */
+        #achievementsList { list-style: none; padding: 0; max-height: 60vh; overflow-y: auto; }
+        .achievement-item { background-color: var(--background-light); color: var(--text-dark); padding: 1rem 1.5rem; margin-bottom: 0.8rem; border-radius: 8px; border: 1px solid #eee; display: flex; align-items: center; gap: 1rem; }
+        .dark-mode .achievement-item { background-color: #252525; border-color: #444; }
+        .achievement-icon { font-size: 2rem; color: gold; }
+        .achievement-details h4 { margin: 0 0 0.3rem 0; font-size: 1.1rem; color: var(--primary-color); }
+        .achievement-details p { margin: 0; font-size: 0.9rem; color: var(--secondary-color); }
+        .dark-mode .achievement-details p { color: #adb5bd; }
+        #achievementsList li:empty { display: none; } /* Hide if empty */
+        #achievementsList .no-achievements { text-align: center; padding: 2rem; color: var(--secondary-color); }
+
+
+        /* Подвал */
+        footer { background-color: #343a40; color: #adb5bd; text-align: center; padding: 1.5rem; margin-top: 3rem; font-size: 0.9rem; }
+        .dark-mode footer { background-color: #111; }
+
+        /* Медиа-запросы */
+        @media (max-width: 768px) { .container { width: 95%; margin: 1rem auto; } .flashcard { height: auto; min-height: 320px; } .flashcard-front, .flashcard-back { padding: 1.5rem; } .flashcard-term-topic { font-size: 1.5rem; } .flashcard-content, .flashcard-problem-text, .flashcard-back-content { font-size: 1rem; } .controls { gap: 0.5rem; } button, .button-style { padding: 0.7rem 1.2rem; font-size: 0.9rem; } .settings-bar { justify-content: center; } .study-modes { gap: 0.5rem; } .mode-card { width: calc(33% - 0.5rem); padding: 1rem; } .stat-value { font-size: 1.5rem; } .modal-content { max-width: 95%; padding: 1.5rem; } .quiz-option { flex-basis: 100%; } .progress-timer-container { flex-direction: column; align-items: stretch; gap: 0.5rem;} #timerDisplay { text-align: center;} }
+        @media (max-width: 480px) { .flashcard { min-height: 300px; } .settings-bar { flex-direction: column; gap: 0.8rem; } .settings-left, .settings-right { width: 100%; justify-content: space-around;} .mode-card { width: calc(50% - 0.5rem); } .stats-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem;} .stat-card { padding: 0.8rem; } .stat-value { font-size: 1.3rem; } header h1 {font-size: 1.6rem;} header p {font-size: 0.9rem;} .deck-list { grid-template-columns: 1fr; } }
+
+    </style>
+    <script>
+        window.MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          },
+          options: {
+              skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'], // Ignore MathJax in these tags
+              ignoreHtmlClass: 'tex2jax_ignore', // Ignore elements with this class
+              processHtmlClass: 'tex2jax_process' // Process elements with this class
+          }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+</head>
+<body>
+    <header>
+        <h1 id="header-title" data-lang-key="header-title">Физика: Карточки и Задачи</h1>
+        <p id="header-subtitle" data-lang-key="header-subtitle">Интерактивное изучение физики</p>
+    </header>
+
+    <div class="settings-bar">
+        <div class="settings-left">
+            <button id="chooseDeckBtn" class="button-outline" data-lang-key="choose-deck">Выбрать колоду</button>
+            <button id="createDeckBtn" class="button-outline" data-lang-key="create-deck">Создать колоду</button>
+            <button id="achievementsBtn" class="button-outline" data-lang-key="achievements">🏆 Достижения</button> </div>
+        <div class="settings-right">
+             <div class="language-dropdown">
+                <button id="languageToggle" class="language-toggle" aria-label="Select Language" data-lang-key="select-language" title="Select Language">🌐</button>
+                <div id="languageMenu" class="language-menu">
+                    <div class="language-option" data-lang="en">English</div>
+                    <div class="language-option" data-lang="ru">Русский</div>
+                    <div class="language-option" data-lang="es">Español</div>
+                </div>
+            </div>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" data-lang-key="toggle-theme" title="Toggle theme">🌙</button>
+        </div>
+    </div>
+
+     <div id="currentDeckDisplay" class="container" data-lang-key="current-deck-label">Текущая колода: <span></span></div>
+
+
+    <div class="container">
+        <div class="study-modes">
+            <div class="mode-card active" data-mode="flashcard" id="flashcardModeCard">
+                <div class="mode-icon">🔄</div>
+                <h3 data-lang-key="mode-flashcards">Термины</h3>
+                <p data-lang-key="mode-flashcards-desc">Изучение понятий</p>
+            </div>
+            <div class="mode-card" data-mode="quiz" id="quizModeCard">
+                <div class="mode-icon">📝</div>
+                <h3 data-lang-key="mode-quiz">Тест</h3>
+                <p data-lang-key="mode-quiz-desc">Проверка знаний</p>
+            </div>
+            <div class="mode-card" data-mode="problems" id="problemsModeCard">
+                <div class="mode-icon">🧮</div>
+                <h3 data-lang-key="mode-problems">Задачи</h3>
+                <p data-lang-key="mode-problems-desc">Решение задач</p>
+            </div>
+        </div>
+
+         <div class="progress-timer-container">
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div id="timerDisplay">00:00</div> </div>
+
+
+        <div class="flashcard-area">
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-front"></div>
+                    <div class="flashcard-back"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="problem-solver" id="problemSolverContainer">
+            <label for="problemAnswerInput" data-lang-key="problem-input-label">Введите ответ (число):</label>
+            <input type="number" id="problemAnswerInput" placeholder="0" step="any">
+            <button class="submit-answer button-style" id="submitProblemAnswer" data-lang-key="submit-answer">Отправить ответ</button>
+        </div>
+        <div class="answer-feedback" id="answerFeedback"></div>
+
+        <div class="controls">
+            <button id="prevBtn" class="button-secondary" disabled>
+                <span>❮</span>&nbsp;<span data-lang-key="previous">Назад</span>
+            </button>
+            <button id="flipBtn" data-lang-key="flip-card">
+                Перевернуть
+            </button>
+            <button id="nextBtn">
+                <span data-lang-key="next">Далее</span>&nbsp;<span>❯</span>
+            </button>
+            <button id="shuffleBtn" class="button-outline" data-lang-key="shuffle">
+                Перемешать
+            </button>
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-header">
+                <h2 data-lang-key="learning-progress">Прогресс обучения</h2>
+                <button id="resetStatsBtn" class="button-outline" data-lang-key="reset-stats" title="Сбросить статистику сессии">Сбросить</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="cardsReviewed">0</div><div class="stat-label" data-lang-key="cards-reviewed">Просмотрено</div></div>
+                <div class="stat-card"><div class="stat-value" id="correctAnswers">0</div><div class="stat-label" data-lang-key="correct-answers">Правильно</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalAttempts">0</div><div class="stat-label" data-lang-key="total-attempts">Попыток</div></div>
+                <div class="stat-card"><div class="stat-value" id="accuracy">0%</div><div class="stat-label" data-lang-key="accuracy-rate">Точность</div></div>
+                <div class="stat-card"><div class="stat-value" id="streakCount">0</div><div class="stat-label" data-lang-key="current-streak">Серия</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="deckModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-lang-key="choose-deck-modal">Выберите колоду</h2>
+                <button class="close-modal" id="closeDeckModal" aria-label="Закрыть" title="Закрыть">&times;</button>
+            </div>
+            <ul class="deck-list" id="deckList"></ul>
+        </div>
+    </div>
+
+     <div class="modal" id="createDeckModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="createDeckModalTitle" data-lang-key="create-new-deck-modal">Создать новую колоду</h2>
+                <button class="close-modal" id="closeCreateDeckModal" aria-label="Закрыть" title="Закрыть">&times;</button>
+            </div>
+            <form id="createDeckForm" class="create-deck-form">
+                <label for="deckTitleInput" data-lang-key="deck-title-label">Название колоды:</label>
+                <input type="text" id="deckTitleInput" required>
+                <label for="deckDescInput" data-lang-key="deck-desc-label">Описание:</label>
+                <input type="text" id="deckDescInput">
+                <label for="deckTypeInput" data-lang-key="deck-type-label">Тип колоды:</label>
+                <select id="deckTypeInput" required>
+                    <option value="terms" data-lang-key="deck-type-terms">Только термины</option>
+                    <option value="problems" data-lang-key="deck-type-problems">Только задачи</option>
+                    <option value="combined" data-lang-key="deck-type-combined">Термины и задачи</option>
+                </select>
+                <div class="add-card-section" id="termsSection">
+                    <h3 data-lang-key="add-cards-terms-header">Добавить Термины</h3>
+                    <div id="termsInputContainer"></div>
+                    <button type="button" id="addAnotherTermBtn" class="button-outline" data-lang-key="add-another-card">Добавить еще термин</button>
+                </div>
+                <div class="add-card-section" id="problemsSection" style="display: none;">
+                    <h3 data-lang-key="add-cards-problems-header">Добавить Задачи</h3>
+                    <div id="problemsInputContainer"></div>
+                    <button type="button" id="addAnotherProblemBtn" class="button-outline" data-lang-key="add-another-problem">Добавить еще задачу</button>
+                </div>
+                <button type="submit" class="button-style" data-lang-key="save-deck">Сохранить колоду</button>
+            </form>
+        </div>
+    </div>
+
+     <div class="modal" id="achievementsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-lang-key="achievements-modal-title">Достижения</h2>
+                <button class="close-modal" id="closeAchievementsModal" aria-label="Закрыть" title="Закрыть">&times;</button>
+            </div>
+            <ul id="achievementsList">
+                <li class="no-achievements" data-lang-key="no-achievements-yet">Вы пока не получили достижений.</li>
+            </ul>
+        </div>
+    </div>
+
+
+    <div class="badge-earned" id="badgeNotification">
+        <div class="badge-icon">🏆</div>
+        <h3 data-lang-key="achievement-unlocked">Достижение!</h3>
+        <p id="badgeDescription" data-lang-key="new-badge">Вы получили значок!</p>
+    </div>
+
+    <footer>
+        <p data-lang-key="footer-text">© 2025 Физика: Карточки и Задачи | Создано в образовательных целях</p>
+    </footer>
+
+    <script>
+        // --- Language Packs (Added keys) ---
+        const languages = {
+            en: {
+                "html-title": "Physics: Flashcards & Problems", "header-title": "Physics: Flashcards & Problems", "header-subtitle": "Interactive Physics Learning",
+                "choose-deck": "Choose Deck", "create-deck": "Create Deck", "mode-flashcards": "Terms", "mode-flashcards-desc": "Learn concepts",
+                "mode-quiz": "Quiz", "mode-quiz-desc": "Test knowledge", "mode-problems": "Problems", "mode-problems-desc": "Solve problems",
+                "start-title": "Let's start!", "start-content": "Choose a deck to begin.", "ready-title": "Ready?", "ready-content": "Press 'Next'.",
+                "submit-answer": "Submit Answer", "previous": "Previous", "next": "Next", "flip-card": "Flip Card", "shuffle": "Shuffle",
+                "original-order": "Original Order", "learning-progress": "Learning Progress", "cards-reviewed": "Reviewed", "correct-answers": "Correct",
+                "total-attempts": "Attempts", "accuracy-rate": "Accuracy", "current-streak": "Streak", "reset-stats": "Reset", "choose-deck-modal": "Choose a Deck",
+                "create-new-deck-modal": "Create New Deck", "deck-title-label": "Deck Title:", "deck-desc-label": "Description:", "deck-type-label": "Deck Type:",
+                "deck-type-terms": "Terms Only", "deck-type-problems": "Problems Only", "deck-type-combined": "Terms and Problems",
+                "add-cards-terms-header": "Add Terms", "add-another-card": "Add Another Term", "add-cards-problems-header": "Add Problems",
+                "add-another-problem": "Add Another Problem",
+                "card-front-title-label": "Term/Topic:", "card-front-content-label": "Prompt/Definition:", "card-back-formula-label": "Formula:", "card-back-units-label": "Units:", "card-back-vars-label": "Variables:", "card-back-content-label": "Explanation:",
+                "problem-title-label": "Problem Title:", "problem-content-label": "Problem:", "problem-answer-label": "Answer (Number):",
+                "save-deck": "Save Deck", "achievement-unlocked": "Achievement Unlocked!",
+                "new-badge": "You earned a new badge!", "streak-title": "Streak!", "streak-5-desc": "5 correct answers in a row!",
+                "streak-10-desc": "10 correct answers in a row! Amazing!", "deck-completed-title": "Deck Completed!",
+                "deck-completed-desc": "You've studied all cards in this deck.", "correct-feedback": "Correct! ✓",
+                "incorrect-feedback": "Incorrect ✗ The correct answer was:", "problem-input-label": "Enter answer (number):", "input-placeholder": "0",
+                "footer-text": "© 2025 Physics: Flashcards & Problems | Created for educational purposes", "no-decks-available": "No decks available. Create one!",
+                "select-language": "Select Language", "toggle-theme": "Toggle theme", "confirm-delete": "Delete deck", "deck-title-required": "Deck title is required.",
+                "add-one-card-alert": "Add at least one valid term or problem.", "deck-created-success": "Deck", "created-successfully": "created successfully!",
+                "one-card-required-alert": "At least one card is required.", "term-header": "Term", "delete-term": "Delete Term", "problem-header": "Problem",
+                "delete-problem": "Delete Problem", "no-options": "No options available.",
+                "achievements": "🏆 Achievements", "achievements-modal-title": "Achievements", "no-achievements-yet": "You haven't earned any achievements yet.", "current-deck-label": "Current Deck:", // New keys
+                "perfection-quiz-title": "Perfection (Quiz)", "perfection-quiz-desc": "Answered all quiz questions correctly in one session!", // Perfection badge keys
+                "perfection-problems-title": "Perfection (Problems)", "perfection-problems-desc": "Answered all problems correctly in one session!"
+            },
+            ru: {
+                "html-title": "Физика: Карточки и Задачи", "header-title": "Физика: Карточки и Задачи", "header-subtitle": "Интерактивное изучение физики",
+                "choose-deck": "Выбрать колоду", "create-deck": "Создать колоду", "mode-flashcards": "Термины", "mode-flashcards-desc": "Изучение понятий",
+                "mode-quiz": "Тест", "mode-quiz-desc": "Проверка знаний", "mode-problems": "Задачи", "mode-problems-desc": "Решение задач",
+                "start-title": "Начнем!", "start-content": "Выберите колоду для изучения.", "ready-title": "Готовы?", "ready-content": "Нажмите 'Далее'.",
+                "submit-answer": "Отправить ответ", "previous": "Назад", "next": "Далее", "flip-card": "Перевернуть", "shuffle": "Перемешать",
+                "original-order": "По порядку", "learning-progress": "Прогресс обучения", "cards-reviewed": "Просмотрено", "correct-answers": "Правильно",
+                "total-attempts": "Попыток", "accuracy-rate": "Точность", "current-streak": "Серия", "reset-stats": "Сбросить", "choose-deck-modal": "Выберите колоду",
+                "create-new-deck-modal": "Создать новую колоду", "deck-title-label": "Название колоды:", "deck-desc-label": "Описание:", "deck-type-label": "Тип колоды:",
+                "deck-type-terms": "Только термины", "deck-type-problems": "Только задачи", "deck-type-combined": "Термины и задачи",
+                "add-cards-terms-header": "Добавить Термины", "add-another-card": "Добавить еще термин", "add-cards-problems-header": "Добавить Задачи",
+                "add-another-problem": "Добавить еще задачу",
+                "card-front-title-label": "Тема/Термин:", "card-front-content-label": "Вопрос/Описание:", "card-back-formula-label": "Формула:", "card-back-units-label": "Ед. изм.:", "card-back-vars-label": "Обозначения:", "card-back-content-label": "Объяснение:",
+                "problem-title-label": "Название задачи:", "problem-content-label": "Задача:", "problem-answer-label": "Ответ (число):",
+                "save-deck": "Сохранить колоду", "achievement-unlocked": "Достижение!",
+                "new-badge": "Вы получили значок!", "streak-title": "Серия!", "streak-5-desc": "5 правильных ответов подряд!",
+                "streak-10-desc": "10 правильных ответов подряд! Отлично!", "deck-completed-title": "Колода изучена!",
+                "deck-completed-desc": "Вы прошли все карточки в этой колоде.", "correct-feedback": "Правильно! ✓",
+                "incorrect-feedback": "Неправильно ✗ Правильный ответ:", "problem-input-label": "Введите ответ (число):", "input-placeholder": "0",
+                "footer-text": "© 2025 Физика: Карточки и Задачи | Создано в образовательных целях", "no-decks-available": "Нет доступных колод. Создайте свою!",
+                "select-language": "Выбрать язык", "toggle-theme": "Переключить тему", "confirm-delete": "Удалить колоду", "deck-title-required": "Название колоды обязательно.",
+                "add-one-card-alert": "Добавьте хотя бы один валидный термин или задачу.", "deck-created-success": "Колода", "created-successfully": "успешно создана!",
+                "one-card-required-alert": "Должна быть хотя бы одна карточка.", "term-header": "Термин", "delete-term": "Удалить Термин", "problem-header": "Задача",
+                "delete-problem": "Удалить Задачу", "no-options": "Нет доступных вариантов.",
+                "achievements": "🏆 Достижения", "achievements-modal-title": "Достижения", "no-achievements-yet": "Вы пока не получили достижений.", "current-deck-label": "Текущая колода:", // New keys
+                "perfection-quiz-title": "Безупречность (Тест)", "perfection-quiz-desc": "Все ответы в тесте верны за одну сессию!", // Perfection badge keys
+                "perfection-problems-title": "Безупречность (Задачи)", "perfection-problems-desc": "Все задачи решены верно за одну сессию!"
+            },
+            es: {
+                "html-title": "Física: Tarjetas y Problemas", "header-title": "Física: Tarjetas y Problemas", "header-subtitle": "Aprendizaje Interactivo de Física",
+                "choose-deck": "Elegir Mazo", "create-deck": "Crear Mazo", "mode-flashcards": "Términos", "mode-flashcards-desc": "Aprender conceptos",
+                "mode-quiz": "Prueba", "mode-quiz-desc": "Evaluar conocimiento", "mode-problems": "Problemas", "mode-problems-desc": "Resolver problemas",
+                "start-title": "¡Empecemos!", "start-content": "Elige un mazo para empezar.", "ready-title": "¿Listo?", "ready-content": "Pulsa 'Siguiente'.",
+                "submit-answer": "Enviar Respuesta", "previous": "Anterior", "next": "Siguiente", "flip-card": "Voltear Tarjeta", "shuffle": "Mezclar",
+                "original-order": "Orden Original", "learning-progress": "Progreso de Aprendizaje", "cards-reviewed": "Revisadas", "correct-answers": "Correctas",
+                "total-attempts": "Intentos", "accuracy-rate": "Precisión", "current-streak": "Racha", "reset-stats": "Reiniciar", "choose-deck-modal": "Elige un Mazo",
+                "create-new-deck-modal": "Crear Nuevo Mazo", "deck-title-label": "Título del Mazo:", "deck-desc-label": "Descripción:", "deck-type-label": "Tipo de Mazo:",
+                "deck-type-terms": "Solo Términos", "deck-type-problems": "Solo Problemas", "deck-type-combined": "Términos y Problemas",
+                "add-cards-terms-header": "Añadir Términos", "add-another-card": "Añadir Otro Término", "add-cards-problems-header": "Añadir Problemas",
+                "add-another-problem": "Añadir Otro Problema",
+                 "card-front-title-label": "Tema/Término:", "card-front-content-label": "Pregunta/Descripción:", "card-back-formula-label": "Fórmula:", "card-back-units-label": "Unidades:", "card-back-vars-label": "Variables:", "card-back-content-label": "Explicación:",
+                 "problem-title-label": "Título del Problema:", "problem-content-label": "Problema:", "problem-answer-label": "Respuesta (Número):",
+                 "save-deck": "Guardar Mazo", "achievement-unlocked": "¡Logro Desbloqueado!",
+                "new-badge": "¡Has ganado una nueva insignia!", "streak-title": "¡Racha!", "streak-5-desc": "¡5 respuestas correctas seguidas!",
+                "streak-10-desc": "¡10 respuestas correctas seguidas! ¡Increíble!", "deck-completed-title": "¡Mazo Completado!",
+                "deck-completed-desc": "Has estudiado todas las tarjetas de este mazo.", "correct-feedback": "¡Correcto! ✓",
+                "incorrect-feedback": "Incorrecto ✗ La respuesta correcta era:", "problem-input-label": "Introduce la respuesta (número):", "input-placeholder": "0",
+                "footer-text": "© 2025 Física: Tarjetas y Problemas | Creado con fines educativos", "no-decks-available": "No hay mazos disponibles. ¡Crea uno!",
+                "select-language": "Seleccionar idioma", "toggle-theme": "Alternar tema", "confirm-delete": "Eliminar mazo", "deck-title-required": "El título del mazo es obligatorio.",
+                "add-one-card-alert": "Añade al menos un término o problema válido.", "deck-created-success": "Mazo", "created-successfully": "creado con éxito!",
+                "one-card-required-alert": "Se requiere al menos una tarjeta.", "term-header": "Término", "delete-term": "Eliminar Término", "problem-header": "Problema",
+                "delete-problem": "Eliminar Problema", "no-options": "No hay opciones disponibles.",
+                 "achievements": "🏆 Logros", "achievements-modal-title": "Logros", "no-achievements-yet": "Aún no has conseguido ningún logro.", "current-deck-label": "Mazo actual:", // New keys
+                "perfection-quiz-title": "Perfección (Prueba)", "perfection-quiz-desc": "¡Respondiste correctamente todas las preguntas de la prueba en una sesión!", // Perfection badge keys
+                "perfection-problems-title": "Perfección (Problemas)", "perfection-problems-desc": "¡Resolviste correctamente todos los problemas en una sesión!"
+            }
+        };
+
+        // --- Deck Data (Example - Same as previous) ---
+        const predefinedDecksMultiLang = {
+            'physics-combined-ru': {
+                ru: {
+                    title: 'Физика: Основы',
+                    description: 'Изучите термины и решите задачи',
+                    deckType: 'combined',
+                    termsCards: [
+                        { front: { title: "Первый закон Ньютона", content: "Сформулируйте закон инерции."}, back: { title: "Закон Инерции", formula:"$\\vec{F}_{net} = 0 \\implies \\vec{v} = const$", units:"Скорость (м/с)", vars:"$\\vec{F}_{net}$ - равнодействующая сила, $\\vec{v}$ - скорость", content: "Существуют такие системы отсчета (инерциальные), относительно которых тело сохраняет свою скорость постоянной, если на него не действуют другие тела или действие этих тел скомпенсировано."}},
+                         { front: { title: "Второй закон Ньютона", content: "Основной закон динамики."}, back: { title: "F = ma", formula:"$\\vec{F}_{net} = m\\vec{a}$", units:"Сила (Н), масса (кг), ускорение (м/с²)", vars:"$\\vec{F}_{net}$ - равнодействующая сила, m - масса, $\\vec{a}$ - ускорение", content: "Ускорение тела прямо пропорционально равнодействующей сил, приложенных к телу, и обратно пропорционально его массе."}},
+                         { front: { title: "Третий закон Ньютона", content: "Закон взаимодействия тел."}, back: { title: "Действие = Противодействие", formula:"$\\vec{F}_{12} = -\\vec{F}_{21}$", units:"Сила (Н)", vars:"$\\vec{F}_{12}$ - сила, действующая на тело 1 со стороны тела 2", content: "Силы, с которыми два тела действуют друг на друга, равны по модулю и противоположны по направлению."}},
+                         { front: { title: "Закон всемирного тяготения", content: "Как взаимодействуют массы?"}, back: { title: "Гравитация", formula:"$F = G \\frac{m_1 m_2}{r^2}$", units:"Сила (Н), масса (кг), расстояние (м)", vars:"G - гравитационная постоянная ($≈ 6.67 \\times 10^{-11}$ Н·м²/кг²), $m_1, m_2$ - массы тел, r - расстояние", content: "Два любых тела притягиваются друг к другу с силой, прямо пропорциональной произведению их масс и обратно пропорциональной квадрату расстояния между ними."}},
+                         { front: { title: "Вес тела", content: "Сила давления на опору."}, back: { title: "P = mg (в покое)", formula:"$\\vec{P} = m(\\vec{g} - \\vec{a})$", units:"Вес (Н), масса (кг), ускорение (м/с²)", vars:"m - масса, $\\vec{g}$ - ускорение свободного падения, $\\vec{a}$ - ускорение опоры/подвеса", content: "Сила, с которой тело вследствие притяжения к Земле действует на опору или подвес. Не путать с массой!"}},
+                         { front: { title: "Импульс тела", content: "Мера механического движения."}, back: { title: "Количество движения", formula:"$\\vec{p} = m\\vec{v}$", units:"кг·м/с", vars:"m - масса, $\\vec{v}$ - скорость", content: "Векторная физическая величина, равная произведению массы тела на его скорость."}},
+                         { front: { title: "Импульс силы", content: "Мера воздействия силы за время."}, back: { title: "Изменение импульса тела", formula:"$\\Delta \\vec{p} = \\vec{F} \\Delta t$", units:"Н·с или кг·м/с", vars:"$\\vec{F}$ - сила, $\\Delta t$ - время действия силы", content: "Произведение силы на время ее действия, равное изменению импульса тела."}},
+                         { front: { title: "Закон сохранения импульса", content: "Что сохраняется в замкнутой системе?"}, back: { title: "Суммарный импульс", formula:"$\\sum \\vec{p}_{до} = \\sum \\vec{p}_{после}$", units:"кг·м/с", vars:"$\\vec{p}$ - импульс тела", content: "В замкнутой системе тел векторная сумма импульсов всех тел системы остается постоянной при любых взаимодействиях тел этой системы между собой."}},
+                         { front: { title: "Кинетическая энергия", content: "Энергия движущегося тела."}, back: { title: "Энергия движения", formula:"$E_k = \\frac{mv^2}{2}$", units:"Джоуль (Дж)", vars:"m - масса (кг), v - скорость (м/с)", content: "Энергия, которой обладает тело вследствие своего движения."}},
+                         { front: { title: "Потенциальная энергия (тяготения)", content: "Энергия положения в поле тяжести."}, back: { title: "Энергия взаимодействия", formula:"$E_p = mgh$", units:"Джоуль (Дж)", vars:"m - масса (кг), g - ускорение своб. падения (м/с²), h - высота (м)", content: "Энергия, обусловленная взаимным расположением тел или частей одного тела в поле тяготения Земли (при h << R_земли)."}},
+                         { front: { title: "Закон сохранения энергии", content: "Фундаментальный закон природы."}, back: { title: "Полная механическая энергия", formula:"$E_k + E_p = const$ (для замкнутой консервативной системы)", units:"Джоуль (Дж)", vars:"$E_k$ - кинетическая, $E_p$ - потенциальная энергия", content: "Полная механическая энергия замкнутой системы тел, в которой действуют только консервативные силы (тяготения, упругости), остается постоянной."}},
+                         { front: { title: "Длина волны", content: "Расстояние между 'гребнями'."}, back: { title: "λ", formula:"$\\lambda = vT = \\frac{v}{f}$", units:"метр (м)", vars:"v - скорость волны (м/с), T - период (с), f - частота (Гц)", content: "Расстояние между двумя ближайшими точками, колеблющимися в одинаковой фазе."}},
+                         { front: { title: "Частота колебаний", content: "Как часто происходят колебания?"}, back: { title: "f или ν", formula:"$f = \\frac{1}{T}$", units:"Герц (Гц)", vars:"T - период колебаний (с)", content: "Число полных колебаний, совершаемых за единицу времени."}},
+                         { front: { title: "Скорость света в вакууме", content: "Предельная скорость."}, back: { title: "c", formula:"$c \\approx 3 \\times 10^8$ м/с", units:"м/с", vars:"c - скорость света", content: "Фундаментальная физическая постоянная, максимальная скорость распространения взаимодействий."}},
+                         { front: { title: "Мощность", content: "Скорость совершения работы."}, back: { title: "N или P", formula:"$N = \\frac{A}{t} = Fv \\cos(\\alpha)$", units:"Ватт (Вт)", vars:"A - работа (Дж), t - время (с), F - сила (Н), v - скорость (м/с)", content: "Физическая величина, равная отношению работы, совершаемой за некоторый промежуток времени, к этому промежутку времени."}},
+                         { front: { title: "Работа силы", content: "Мера действия силы по перемещению."}, back: { title: "A", formula:"$A = Fs \\cos(\\alpha)$", units:"Джоуль (Дж)", vars:"F - сила (Н), s - перемещение (м), α - угол между силой и перемещением", content: "Скалярная физическая величина, характеризующая изменение энергии системы в результате действия на нее силы."}},
+                         { front: { title: "Уравнение теплового баланса", content: "Теплообмен в изолированной системе."}, back: { title: "Q_отд + Q_пол = 0", formula:"$\\sum Q_i = 0$", units:"Джоуль (Дж)", vars:"Q - количество теплоты", content: "В изолированной системе, в которой происходит теплообмен, суммарное количество теплоты, отданное более нагретыми телами, равно суммарному количеству теплоты, полученному менее нагретыми телами."}},
+                         { front: { title: "Закон Ома для участка цепи", content: "Связь тока, напряжения и сопротивления."}, back: { title: "I = U / R", formula:"$I = \\frac{U}{R}$", units:"Ток (А), Напряжение (В), Сопротивление (Ом)", vars:"I - сила тока, U - напряжение, R - сопротивление", content: "Сила тока на участке цепи прямо пропорциональна напряжению на концах этого участка и обратно пропорциональна его сопротивлению."}},
+                         { front: { title: "Закон Кулона", content: "Взаимодействие точечных зарядов."}, back: { title: "Сила взаимодействия зарядов", formula:"$F = k \\frac{|q_1 q_2|}{r^2}$", units:"Сила (Н), заряд (Кл), расстояние (м)", vars:"k - коэффициент пропорциональности ($≈ 9 \\times 10^9$ Н·м²/Кл²), $q_1, q_2$ - величины зарядов, r - расстояние", content: "Сила взаимодействия двух неподвижных точечных зарядов в вакууме прямо пропорциональна произведению модулей этих зарядов и обратно пропорциональна квадрату расстояния между ними."}},
+                         { front: { title: "Электрический ток", content: "Упорядоченное движение зарядов."}, back: { title: "Сила тока", formula:"$I = \\frac{\\Delta q}{\\Delta t}$", units:"Ампер (А)", vars:"$\\Delta q$ - заряд (Кл), прошедший через поперечное сечение проводника, $\\Delta t$ - время (с)", content: "Направленное (упорядоченное) движение заряженных частиц. Сила тока - скалярная величина, равная отношению заряда, прошедшего через сечение проводника, ко времени его прохождения."}}
+                    ],
+                    problemsCards: [ /* ... (10 карточек задач из предыдущего шага) ... */
+                          { front: { title: "Задача: Скорость", content: "Автомобиль проехал 180 км за 2 часа. Какова его средняя скорость в км/ч?" }, back: { content: "90" } },
+                          { front: { title: "Задача: Сила (2 закон Ньютона)", content: "Тело массой 5 кг движется с ускорением 3 м/с². Какая сила действует на тело (в Н)?" }, back: { content: "15" } },
+                          { front: { title: "Задача: Работа", content: "Сила 20 Н переместила тело на 5 м в направлении силы. Какая работа совершена (в Дж)?" }, back: { content: "100" } },
+                          { front: { title: "Задача: Кинетическая энергия", content: "Тело массой 4 кг движется со скоростью 10 м/с. Какова его кинетическая энергия (в Дж)?" }, back: { content: "200" } },
+                          { front: { title: "Задача: Потенциальная энергия", content: "Тело массой 2 кг поднято на высоту 5 м. Какова его потенциальная энергия (g=10 м/с²) (в Дж)?" }, back: { content: "100" } },
+                          { front: { title: "Задача: Закон Ома", content: "Напряжение на резисторе 12 В, сопротивление 3 Ом. Какова сила тока (в А)?" }, back: { content: "4" } },
+                          { front: { title: "Задача: Мощность тока", content: "Сила тока в лампе 0.5 А, напряжение 220 В. Какова мощность лампы (в Вт)?" }, back: { content: "110" } },
+                          { front: { title: "Задача: Импульс", content: "Тело массой 0.5 кг движется со скоростью 8 м/с. Чему равен импульс тела (в кг·м/с)?" }, back: { content: "4" } },
+                          { front: { title: "Задача: Теплота (Нагревание)", content: "Удельная теплоемкость воды 4200 Дж/(кг·°C). Сколько теплоты (в кДж) нужно, чтобы нагреть 0.5 кг воды на 20 °C?" }, back: { content: "42" } },
+                          { front: { title: "Задача: Частота", content: "Маятник совершил 50 колебаний за 10 секунд. Какова частота колебаний (в Гц)?" }, back: { content: "5" } }
+                     ]
+                }
+            }
+        };
+        let allDecks = {};
+
+        // --- Global Variables (Added timer and perfection tracking) ---
+        let customDecks = {};
+        let currentDeckId = null;
+        let currentDeckData = null;
+        let currentDeckCards = [];
+        let termsDeck = [];
+        let problemsDeck = [];
+        let originalTermsDeck = [];
+        let originalProblemsDeck = [];
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        let isShuffled = false;
+        let currentLanguage = 'ru';
+        let currentMode = 'flashcard';
+        let stats = { reviewed: 0, correct: 0, streak: 0, maxStreak: 0, badgesEarned: [] }; // Store earned badges {id, name, description}
+        let earnedBadges = new Set(); // Store IDs of earned badges to prevent duplicates
+        let viewedTermCardIndices = new Set();
+        // Global total attempts/correct for overall stats display
+        let totalAttempts = 0;
+        let totalCorrect = 0; // Rename from stats.correct for clarity
+        // Session-specific counters for perfection badge
+        let quizAttemptsInSession = 0;
+        let quizCorrectInSession = 0;
+        let problemAttemptsInSession = 0;
+        let problemCorrectInSession = 0;
+        let termInputCounter = 0;
+        let problemInputCounter = 0;
+        let quizAnswered = false;
+        // Timer variables
+        let timerInterval = null;
+        let timerStartTime = 0;
+        let elapsedSeconds = 0;
+
+
+        // --- DOM Elements (Added timer, achievements, deck display) ---
+        const flashcardEl = document.getElementById('flashcard');
+        const front = flashcardEl?.querySelector('.flashcard-front');
+        const back = flashcardEl?.querySelector('.flashcard-back');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const flipBtn = document.getElementById('flipBtn');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const progressBar = document.getElementById('progressBar');
+        const timerDisplay = document.getElementById('timerDisplay'); // New Timer Element
+        const chooseDeckBtn = document.getElementById('chooseDeckBtn');
+        const deckModal = document.getElementById('deckModal');
+        const closeDeckModalBtn = document.getElementById('closeDeckModal');
+        const deckList = document.getElementById('deckList');
+        const themeToggle = document.getElementById('themeToggle');
+        const languageToggle = document.getElementById('languageToggle');
+        const languageMenu = document.getElementById('languageMenu');
+        const modeCards = document.querySelectorAll('.mode-card');
+        const flashcardModeCard = document.getElementById('flashcardModeCard');
+        const quizModeCard = document.getElementById('quizModeCard');
+        const problemsModeCard = document.getElementById('problemsModeCard');
+        const quizOptionsContainer = document.getElementById('quizOptions');
+        const problemSolverContainer = document.getElementById('problemSolverContainer');
+        const problemAnswerInput = document.getElementById('problemAnswerInput');
+        const submitProblemAnswerBtn = document.getElementById('submitProblemAnswer');
+        const answerFeedback = document.getElementById('answerFeedback');
+        const cardsReviewedStat = document.getElementById('cardsReviewed');
+        const correctAnswersStat = document.getElementById('correctAnswers'); // Will show totalCorrect
+        const totalAttemptsStat = document.getElementById('totalAttempts'); // Will show totalAttempts
+        const accuracyStat = document.getElementById('accuracy');
+        const streakCountStat = document.getElementById('streakCount');
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        const badgeNotification = document.getElementById('badgeNotification');
+        const badgeDescription = badgeNotification?.querySelector('p#badgeDescription');
+        const createDeckBtn = document.getElementById('createDeckBtn');
+        const createDeckModal = document.getElementById('createDeckModal');
+        const closeCreateDeckModalBtn = document.getElementById('closeCreateDeckModal');
+        const createDeckForm = document.getElementById('createDeckForm');
+        const deckTitleInput = document.getElementById('deckTitleInput');
+        const deckDescInput = document.getElementById('deckDescInput');
+        const deckTypeInput = document.getElementById('deckTypeInput');
+        const termsSection = document.getElementById('termsSection');
+        const problemsSection = document.getElementById('problemsSection');
+        const termsInputContainer = document.getElementById('termsInputContainer');
+        const problemsInputContainer = document.getElementById('problemsInputContainer');
+        const addAnotherTermBtn = document.getElementById('addAnotherTermBtn');
+        const addAnotherProblemBtn = document.getElementById('addAnotherProblemBtn');
+        const createDeckModalTitle = document.getElementById('createDeckModalTitle');
+        const achievementsBtn = document.getElementById('achievementsBtn'); // New Achievements Button
+        const achievementsModal = document.getElementById('achievementsModal'); // New Achievements Modal
+        const closeAchievementsModalBtn = document.getElementById('closeAchievementsModal'); // New Close Button
+        const achievementsList = document.getElementById('achievementsList'); // New List Element
+        const currentDeckDisplay = document.getElementById('currentDeckDisplay'); // New Deck Display Element
+        const currentDeckLabelSpan = currentDeckDisplay?.querySelector('span');
+
+
+        // --- Functions ---
+
+        // renderMathJax, load/save custom decks, combine decks (Same as previous)
+        function renderMathJax() {
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                try {
+                     // Ensure elements exist before passing to MathJax
+                    const elementsToTypeset = [flashcardEl, quizOptionsContainer].filter(el => el && document.body.contains(el));
+                    if (elementsToTypeset.length > 0) {
+                        MathJax.typesetPromise(elementsToTypeset).catch(err => console.error("Ошибка рендеринга MathJax внутри promise:", err));
+                    }
+                } catch(e) {
+                    console.error("Ошибка вызова MathJax.typesetPromise:", e);
+                }
+            } else {
+                 // console.log("MathJax не готов для рендеринга.");
+            }
+        }
+
+        // loadCustomDecksFromLocalStorage, saveCustomDecksToLocalStorage, combineAllDecks (Same as previous)
+         function loadCustomDecksFromLocalStorage() {
+            const storedDecks = localStorage.getItem('customFlashcardDecks');
+            if (storedDecks) {
+                try {
+                    customDecks = JSON.parse(storedDecks);
+                    // console.log("Пользовательские колоды загружены:", customDecks);
+                    return customDecks;
+                } catch (e) {
+                    console.error("Ошибка парсинга пользовательских колод:", e);
+                    customDecks = {};
+                    localStorage.removeItem('customFlashcardDecks');
+                    return {};
+                }
+            }
+            // console.log("Пользовательские колоды не найдены.");
+            customDecks = {};
+            return {};
+        }
+
+        function saveCustomDecksToLocalStorage() {
+            try {
+                localStorage.setItem('customFlashcardDecks', JSON.stringify(customDecks));
+                // console.log("Пользовательские колоды сохранены:", customDecks);
+            } catch (e) {
+                console.error("Ошибка сохранения пользовательских колод:", e);
+                alert("Ошибка сохранения колоды. Возможно, хранилище переполнено.");
+            }
+        }
+
+        function combineAllDecks() {
+            const loadedCustomDecks = loadCustomDecksFromLocalStorage();
+            const clonedPredefined = JSON.parse(JSON.stringify(predefinedDecksMultiLang));
+            allDecks = { ...clonedPredefined, ...loadedCustomDecks };
+            // console.log("Все колоды объединены:", allDecks);
+        }
+
+        // updateLanguage (Ensure new keys are handled)
+        function updateLanguage(lang) {
+            if (!languages[lang]) lang = 'ru';
+            currentLanguage = lang;
+            localStorage.setItem('flashcardLang', lang);
+            document.documentElement.lang = lang;
+            document.title = languages[lang]?.['html-title'] || "Flashcards";
+
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.getAttribute('data-lang-key');
+                const translation = languages[lang]?.[key];
+                if (translation !== undefined) {
+                     if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.placeholder !== undefined) el.placeholder = translation;
+                     else if (el.tagName === 'OPTION') el.textContent = translation;
+                     else if (el.title && (el.id === 'languageToggle' || el.id === 'themeToggle' || el.id === 'resetStatsBtn' || el.classList.contains('delete-term-btn') || el.classList.contains('delete-problem-btn') || el.classList.contains('delete-deck-btn') || el.classList.contains('close-modal'))) { el.title = translation; if (el.ariaLabel) el.ariaLabel = translation;}
+                     else if (el.tagName === 'BUTTON' && el.querySelector('span[data-lang-key]')) { const span = el.querySelector('span[data-lang-key]'); if(span && span.dataset.langKey === key) span.textContent = translation; }
+                     else if (el.id === 'currentDeckDisplay' && currentDeckLabelSpan) { el.firstChild.textContent = translation + ' '; } // Handle deck display label
+                     else el.textContent = translation;
+                }
+            });
+
+            if (shuffleBtn) shuffleBtn.textContent = languages[currentLanguage]?.[isShuffled ? 'original-order' : 'shuffle'] || (isShuffled ? 'По порядку' : 'Перемешать');
+            if (currentDeckId && currentDeckLabelSpan) currentDeckLabelSpan.textContent = currentDeckData?.title || currentDeckId; // Update displayed deck name
+            else if (currentDeckLabelSpan) currentDeckLabelSpan.textContent = ''; // Clear if no deck
+
+            if (currentDeckId) { updateCard(); if (currentMode === 'quiz') generateQuizOptions(); }
+            else showInitialMessage();
+
+            if (deckModal?.style.display === 'flex') populateDeckList();
+            if (createDeckModal?.style.display === 'flex') updateLanguageForElement(createDeckModal);
+            if (achievementsModal?.style.display === 'flex') populateAchievementsList(); // Update achievements modal lang if open
+        }
+
+
+        // shuffleArray (Same as previous)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // updateCard (Reset timer on card change)
+        function updateCard() {
+            if (!flashcardEl || !front || !back) return;
+            if (!currentDeckCards || currentDeckCards.length === 0) { updateButtonStates(true); return; }
+            if (currentCardIndex >= currentDeckCards.length) currentCardIndex = 0;
+            if (currentCardIndex < 0) currentCardIndex = 0;
+
+            const card = currentDeckCards[currentCardIndex];
+            if (!card || !card.front || !card.back) {
+                console.error("Ошибка структуры карточки:", currentCardIndex, card);
+                front.innerHTML = '<h2>Ошибка</h2><p>Данные карты неверны</p>';
+                back.innerHTML = '';
+                updateButtonStates(true);
+                return;
+            }
+
+            // --- Stats Update (Reviewed Terms) ---
+            if ((currentMode === 'flashcard' || currentMode === 'quiz')) {
+                 const originalIndex = originalTermsDeck.findIndex(c => c === card);
+                 if (originalIndex !== -1 && !viewedTermCardIndices.has(originalIndex)) {
+                    viewedTermCardIndices.add(originalIndex);
+                    stats.reviewed = viewedTermCardIndices.size;
+                    if (cardsReviewedStat) cardsReviewedStat.textContent = stats.reviewed;
+                    // console.log(`Reviewed term card (original index ${originalIndex}). Total reviewed: ${stats.reviewed}`);
+                 }
+             }
+
+            flashcardEl.classList.remove('flipped'); isFlipped = false;
+            flashcardEl.classList.remove('card-animation'); void flashcardEl.offsetWidth; flashcardEl.classList.add('card-animation');
+            front.innerHTML = ''; back.innerHTML = '';
+
+            const isProblemMode = currentMode === 'problems';
+            const isQuizMode = currentMode === 'quiz';
+
+            // --- Populate Card Content ---
+            if (isProblemMode) {
+                front.innerHTML = `
+                    <h2 class="flashcard-term-topic">${card.front.title || languages[currentLanguage]['problem-header'] || 'Задача'}</h2>
+                    <p class="flashcard-problem-text">${card.front.content || ''}</p>`;
+                back.innerHTML = `
+                    <div class="flashcard-back-section">
+                        <strong>${languages[currentLanguage]['problem-answer-label'] || 'Ответ:'}</strong>
+                        <div class="flashcard-problem-answer">${card.back.content || '-'}</div>
+                    </div>`;
+            } else {
+                front.innerHTML = `
+                    <h2 class="flashcard-term-topic">${card.front.title || ''}</h2>
+                    <p class="flashcard-term-prompt">${card.front.content || ''}</p>`;
+                back.innerHTML = `
+                    <div class="flashcard-back-section"><strong>${languages[currentLanguage]['card-back-formula-label'] || 'Формула:'}</strong><div class="flashcard-back-content">${card.back.formula || '-'}</div></div>
+                    <div class="flashcard-back-section"><strong>${languages[currentLanguage]['card-back-units-label'] || 'Ед. изм.:'}</strong><div class="flashcard-back-content">${card.back.units || '-'}</div></div>
+                    <div class="flashcard-back-section"><strong>${languages[currentLanguage]['card-back-vars-label'] || 'Обозначения:'}</strong><div class="flashcard-back-content">${card.back.vars || '-'}</div></div>
+                    <div class="flashcard-back-section"><strong>${languages[currentLanguage]['card-back-content-label'] || 'Объяснение:'}</strong><div class="flashcard-back-content">${card.back.content || '-'}</div></div>`;
+            }
+
+            renderMathJax();
+            updateModeUI();
+            hideAnswerFeedback();
+            quizAnswered = false;
+            updateProgressBar();
+            updateButtonStates();
+
+            // --- Timer Reset ---
+            if (isQuizMode || isProblemMode) {
+                resetTimer(); // Reset timer for the new card
+                startTimer(); // Start it again
+            }
+        }
+
+        // showInitialMessage (Clear deck display, stop timer)
+        function showInitialMessage() {
+             if (!flashcardEl || !front || !back) return;
+             flashcardEl.classList.remove('flipped'); isFlipped = false;
+             front.innerHTML = `<h2 class="flashcard-term-topic" data-lang-key="start-title">${languages[currentLanguage]['start-title']}</h2><p class="flashcard-term-prompt" data-lang-key="start-content">${languages[currentLanguage]['start-content']}</p>`;
+             back.innerHTML = `<h2 data-lang-key="ready-title">${languages[currentLanguage]['ready-title']}</h2><p data-lang-key="ready-content">${languages[currentLanguage]['ready-content']}</p>`;
+             if (quizOptionsContainer) quizOptionsContainer.style.display = 'none';
+             if (problemSolverContainer) problemSolverContainer.style.display = 'none';
+             hideAnswerFeedback();
+             renderMathJax();
+             updateProgressBar(true);
+             updateButtonStates(true);
+             if (currentDeckLabelSpan) currentDeckLabelSpan.textContent = ''; // Clear current deck display
+             stopTimer(); // Ensure timer is stopped
+             resetTimerDisplay(); // Reset display
+        }
+
+        // updateProgressBar, updateButtonStates, updateModesAvailability (Same as previous)
+        function updateProgressBar(reset = false) {
+            if (!progressBar) return;
+            if (reset || !currentDeckCards || currentDeckCards.length === 0) {
+                progressBar.style.width = '0%';
+            } else {
+                const progress = ((currentCardIndex + 1) / currentDeckCards.length) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+        }
+
+        function updateButtonStates(reset = false) {
+            const noCardsLoaded = !currentDeckCards || currentDeckCards.length === 0;
+            if (prevBtn) prevBtn.disabled = reset || noCardsLoaded || currentCardIndex === 0;
+            if (nextBtn) nextBtn.disabled = reset || noCardsLoaded;
+            if (flipBtn) flipBtn.disabled = reset || noCardsLoaded || currentMode !== 'flashcard';
+            if (shuffleBtn) {
+                shuffleBtn.disabled = reset || noCardsLoaded;
+                shuffleBtn.textContent = languages[currentLanguage]?.[isShuffled ? 'original-order' : 'shuffle'] || (isShuffled ? 'По порядку' : 'Перемешать');
+            }
+        }
+
+
+        // --- MODIFIED: updateModesAvailability ---
+        function updateModesAvailability(hasTerms, hasProblems) {
+             // console.log(`Updating modes availability: hasTerms=${hasTerms}, hasProblems=${hasProblems}`);
+            if (!flashcardModeCard || !quizModeCard || !problemsModeCard) return; // Ensure elements exist
+
+            // Toggle disabled class based on availability
+            flashcardModeCard.classList.toggle('disabled', !hasTerms);
+            quizModeCard.classList.toggle('disabled', !hasTerms);
+            problemsModeCard.classList.toggle('disabled', !hasProblems);
+
+            // Check if the *currently selected* mode card is now disabled
+            const currentModeCard = document.querySelector(`.mode-card[data-mode="${currentMode}"]`);
+            if (currentModeCard && currentModeCard.classList.contains('disabled')) {
+                console.warn(`Current mode '${currentMode}' is now disabled.`);
+                // Try switching to an available mode
+                if (hasTerms) {
+                     console.log("Switching to available 'flashcard' mode.");
+                     switchMode('flashcard'); // Prioritize flashcard if terms available
+                 } else if (hasProblems) {
+                     console.log("Switching to available 'problems' mode.");
+                     switchMode('problems');
+                 } else {
+                     // --- No modes available ---
+                     console.warn("No modes available after update.");
+                     // Do NOT call showInitialMessage here - let the calling function handle it
+                     // Just ensure visual state reflects disabled modes
+                     modeCards.forEach(card => card.classList.add('disabled'));
+                 }
+            } else if (currentModeCard) {
+                // Ensure the current mode card remains visually active if it's still enabled
+                modeCards.forEach(card => card.classList.remove('active'));
+                currentModeCard.classList.add('active');
+            }
+        }
+
+        // flipCard, nextCard, prevCard, toggleShuffle (Same as previous, nextCard triggers perfection check)
+        function flipCard() {
+            if (currentMode !== 'flashcard' || !currentDeckCards?.length || !flashcardEl) return;
+            flashcardEl.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+         function nextCard() {
+             if (!currentDeckCards?.length) return;
+             if (currentCardIndex < currentDeckCards.length - 1) {
+                 currentCardIndex++;
+                 updateCard();
+             } else {
+                 // Reached end of the current set
+                 checkPerfectionBadge(currentMode); // Check perfection before wrapping/stopping
+                 checkBadgeCompletion(); // Check standard completion badge
+                 console.log(`Reached end of ${currentMode} cards.`);
+                 currentCardIndex = 0; // Wrap around
+                 updateCard();
+             }
+         }
+         function prevCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                updateCard();
+            }
+        }
+
+       function toggleShuffle() {
+             let deckToShuffle = (currentMode === 'problems') ? problemsDeck : termsDeck;
+             let originalDeck = (currentMode === 'problems') ? originalProblemsDeck : originalTermsDeck;
+
+            if (!deckToShuffle || deckToShuffle.length < 2) return;
+
+            isShuffled = !isShuffled;
+            if (isShuffled) {
+                currentDeckCards = shuffleArray([...deckToShuffle]);
+                // console.log(`Колода (${currentMode}) перемешана.`);
+            } else {
+                currentDeckCards = [...originalDeck];
+                // console.log(`Восстановлен исходный порядок (${currentMode}).`);
+            }
+            currentCardIndex = 0;
+            updateCard();
+        }
+
+        // --- Timer Functions ---
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function updateTimerDisplay() {
+            if (timerDisplay) {
+                timerDisplay.textContent = formatTime(elapsedSeconds);
+            }
+        }
+
+         function resetTimerDisplay() {
+             if (timerDisplay) {
+                 timerDisplay.textContent = formatTime(0);
+                 timerDisplay.classList.remove('visible');
+             }
+         }
+
+        function startTimer() {
+            stopTimer(); // Clear any existing timer first
+            if (timerDisplay) timerDisplay.classList.add('visible');
+            timerStartTime = Date.now();
+            elapsedSeconds = 0; // Reset elapsed time for the new card/start
+            updateTimerDisplay(); // Show 00:00 immediately
+
+            timerInterval = setInterval(() => {
+                elapsedSeconds = Math.floor((Date.now() - timerStartTime) / 1000);
+                updateTimerDisplay();
+            }, 1000);
+             // console.log("Timer started");
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                 // console.log("Timer stopped");
+            }
+            if (timerDisplay) timerDisplay.classList.remove('visible'); // Hide timer when stopped
+        }
+
+        function resetTimer() {
+            stopTimer();
+            elapsedSeconds = 0;
+            resetTimerDisplay();
+             // console.log("Timer reset");
+        }
+
+
+        // --- MODIFIED: loadDeck (Check perfection, reset session counters, update deck display, handle timer) ---
+        function loadDeck(deckId) {
+             // --- Check Perfection Before Loading New Deck ---
+             checkPerfectionBadge(currentMode); // Check based on the mode we are *leaving*
+
+             const rawDeckData = allDecks[deckId];
+             if (!rawDeckData) { /* ... error handling ... */ currentDeckId = null; showInitialMessage(); updateModesAvailability(false, false); return; }
+
+             currentDeckData = rawDeckData[currentLanguage] || rawDeckData['ru'] || Object.values(rawDeckData).find(d => typeof d === 'object' && (d.cards || d.termsCards || d.problemsCards)) || rawDeckData;
+             if (!currentDeckData || typeof currentDeckData !== 'object') { /* ... error handling ... */ currentDeckId = null; showInitialMessage(); updateModesAvailability(false, false); return; }
+
+             currentDeckId = deckId;
+             localStorage.setItem('lastDeckId', deckId);
+             const deckType = currentDeckData.deckType || 'terms';
+             const deckTitle = currentDeckData.title || deckId;
+
+             // Reset state
+             termsDeck = []; problemsDeck = []; originalTermsDeck = []; originalProblemsDeck = [];
+             currentCardIndex = 0; isShuffled = false;
+             viewedTermCardIndices.clear();
+
+             // --- Reset Global and Session Stats ---
+             resetStats(); // Reset includes totalCorrect, totalAttempts, streak etc.
+             // Explicitly reset session counters for perfection tracking
+             quizAttemptsInSession = 0; quizCorrectInSession = 0;
+             problemAttemptsInSession = 0; problemCorrectInSession = 0;
+
+             // Populate decks
+             if (deckType === 'combined') { termsDeck = currentDeckData.termsCards || []; problemsDeck = currentDeckData.problemsCards || []; }
+             else if (deckType === 'terms') { termsDeck = currentDeckData.cards || []; }
+             else if (deckType === 'problems') { problemsDeck = currentDeckData.cards || []; }
+             originalTermsDeck = [...termsDeck]; originalProblemsDeck = [...problemsDeck];
+
+             const hasTerms = termsDeck.length > 0;
+             const hasProblems = problemsDeck.length > 0;
+
+             // --- Determine Initial Mode & Stop Timer ---
+             stopTimer(); // Stop timer from previous deck
+             resetTimerDisplay(); // Reset timer display
+             let initialMode = 'flashcard'; // Default start mode
+
+             if (hasTerms) { initialMode = 'flashcard'; currentDeckCards = [...termsDeck]; }
+             else if (hasProblems) { initialMode = 'problems'; currentDeckCards = [...problemsDeck]; }
+             else { initialMode = 'flashcard'; currentDeckCards = []; }
+
+             // Set the mode *before* potentially starting the timer
+             currentMode = initialMode;
+
+             // Update Deck Display
+             if (currentDeckLabelSpan) currentDeckLabelSpan.textContent = deckTitle;
+             else if (currentDeckDisplay) currentDeckDisplay.firstChild.textContent = (languages[currentLanguage]['current-deck-label'] || 'Текущая колода:') + ' '; // Ensure label text exists
+
+             // --- Update UI & Start Timer if applicable ---
+             if (currentDeckCards.length > 0) {
+                 updateCard(); // Update display first
+             } else {
+                 showInitialMessage(); // Show initial message if deck is effectively empty
+             }
+             updateModesAvailability(hasTerms, hasProblems); // THEN update mode button states
+
+             // Start timer ONLY if the initial mode is quiz or problems
+             if (currentMode === 'quiz' || currentMode === 'problems') {
+                 startTimer();
+             }
+         }
+
+
+        // --- MODIFIED: updateStats (Use totalCorrect/totalAttempts) ---
+        function updateStats(type, mode) { // mode needed to update session counters
+            let updateAccuracyDisplay = false;
+
+            // Update session counters based on mode
+             if (mode === 'quiz') {
+                 quizAttemptsInSession++;
+                 if (type === 'correct') quizCorrectInSession++;
+             } else if (mode === 'problems') {
+                 problemAttemptsInSession++;
+                 if (type === 'correct') problemCorrectInSession++;
+             }
+
+             // Update global counters
+            if (type === 'correct') {
+                totalCorrect++;
+                stats.streak++;
+                stats.maxStreak = Math.max(stats.maxStreak, stats.streak);
+                totalAttempts++;
+                updateAccuracyDisplay = true;
+                checkBadges(); // Check for streak badges
+            } else if (type === 'incorrect') {
+                stats.streak = 0;
+                totalAttempts++;
+                updateAccuracyDisplay = true;
+            }
+            // 'reviewed' stat is updated separately in updateCard
+
+            // Update display elements
+            if (correctAnswersStat) correctAnswersStat.textContent = totalCorrect;
+            if (streakCountStat) streakCountStat.textContent = stats.streak;
+            if (totalAttemptsStat) totalAttemptsStat.textContent = totalAttempts;
+            if (updateAccuracyDisplay && accuracyStat) {
+                const accuracyValue = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(0) : 0;
+                accuracyStat.textContent = `${accuracyValue}%`;
+            }
+        }
+
+        // populateDeckList, handleDeleteDeck, toggleTheme, initializeTheme, initializeLanguage (Same as previous)
+        function populateDeckList() {
+            if (!deckList) return;
+            deckList.innerHTML = '';
+            // console.log("Заполнение списка колод из:", allDecks);
+            const deckEntries = Object.entries(allDecks);
+             deckEntries.sort(([idA, deckA], [idB, deckB]) => {
+                 const isAPredefined = predefinedDecksMultiLang.hasOwnProperty(idA);
+                 const isBPredefined = predefinedDecksMultiLang.hasOwnProperty(idB);
+                 if (isAPredefined && !isBPredefined) return -1;
+                 if (!isAPredefined && isBPredefined) return 1;
+                 const titleA = (deckA[currentLanguage]?.title || deckA['ru']?.title || deckA.title || idA).toLowerCase();
+                 const titleB = (deckB[currentLanguage]?.title || deckB['ru']?.title || deckB.title || idB).toLowerCase();
+                 return titleA.localeCompare(titleB);
+             });
+
+            deckEntries.forEach(([deckId, deckData]) => {
+                const langContent = deckData[currentLanguage] || deckData['ru'] || Object.values(deckData).find(d => typeof d === 'object' && (d.cards || d.termsCards || d.problemsCards)) || deckData;
+                if (!langContent || typeof langContent !== 'object') {
+                    console.warn(`Skipping deck ${deckId}: Invalid data structure.`);
+                    return;
+                }
+                const title = langContent.title || deckId;
+                const description = langContent.description || "";
+                const deckType = langContent.deckType || 'terms';
+                const isCustom = customDecks.hasOwnProperty(deckId);
+                let cardCount = 0;
+                if (deckType === 'combined') {
+                    cardCount = (langContent.termsCards?.length || 0) + (langContent.problemsCards?.length || 0);
+                } else if (deckType === 'terms') {
+                    cardCount = langContent.cards?.length || langContent.termsCards?.length || 0;
+                } else if (deckType === 'problems') {
+                    cardCount = langContent.cards?.length || langContent.problemsCards?.length || 0;
+                }
+                let typeKey = 'deck-type-terms';
+                if (deckType === 'problems') typeKey = 'deck-type-problems';
+                else if (deckType === 'combined') typeKey = 'deck-type-combined'; // Corrected
+                const typeText = languages[currentLanguage]?.[typeKey] || deckType;
+
+                const li = document.createElement('li');
+                li.classList.add('deck-item');
+                li.dataset.deckId = deckId;
+                const deleteBtnTitle = `${languages[currentLanguage]?.['confirm-delete'] || 'Удалить колоду'} ${title}`;
+                li.innerHTML = `
+                    <h3 class="deck-title">${title} <span style="font-size:0.8em; color: #888;">(${typeText})</span></h3>
+                    <p class="deck-info">${description}</p>
+                    <p class="deck-info">${cardCount} карт(ы)</p>
+                    ${isCustom ? `<button class="delete-deck-btn" data-deck-id="${deckId}" aria-label="${deleteBtnTitle}" title="${deleteBtnTitle}">🗑️</button>` : ''}
+                `;
+                li.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-deck-btn')) return;
+                    loadDeck(deckId);
+                    if (deckModal) deckModal.style.display = 'none';
+                });
+                const deleteBtn = li.querySelector('.delete-deck-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        handleDeleteDeck(deckId);
+                    });
+                }
+                deckList.appendChild(li);
+            });
+            if (deckEntries.length === 0) {
+                deckList.innerHTML = `<li data-lang-key="no-decks-available">${languages[currentLanguage]?.['no-decks-available'] || 'Нет доступных колод.'}</li>`;
+            }
+        }
+
+        function handleDeleteDeck(deckId) {
+            if (!customDecks[deckId]) return;
+            const deckTitleToDelete = (customDecks[deckId][currentLanguage]?.title || customDecks[deckId]['ru']?.title || customDecks[deckId].title || deckId);
+            if (confirm(`${languages[currentLanguage]?.['confirm-delete'] || 'Удалить колоду'} "${deckTitleToDelete}"?`)) {
+                delete customDecks[deckId];
+                delete allDecks[deckId];
+                saveCustomDecksToLocalStorage();
+                populateDeckList();
+                if (currentDeckId === deckId) {
+                    currentDeckId = null;
+                    currentDeckData = null;
+                    currentDeckCards = [];
+                    termsDeck = []; problemsDeck = [];
+                    originalTermsDeck = []; originalProblemsDeck = [];
+                    const firstDeckId = Object.keys(allDecks)[0];
+                    if (firstDeckId) {
+                        loadDeck(firstDeckId);
+                    } else {
+                        showInitialMessage();
+                         updateModesAvailability(false, false); // Ensure modes are disabled
+                    }
+                }
+                // console.log(`Колода "${deckId}" удалена.`);
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            if (themeToggle) themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+            localStorage.setItem('flashcardTheme', isDarkMode ? 'dark' : 'light');
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('flashcardTheme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                if (themeToggle) themeToggle.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                if (themeToggle) themeToggle.textContent = '🌙';
+            }
+        }
+
+        function initializeLanguage() {
+            const savedLang = localStorage.getItem('flashcardLang') || navigator.language.split('-')[0] || 'ru';
+            updateLanguage(languages[savedLang] ? savedLang : 'ru');
+        }
+
+        // --- MODIFIED: initializeDecks ---
+        function initializeDecks() {
+            combineAllDecks();
+            const lastDeckId = localStorage.getItem('lastDeckId');
+            let deckToLoad = null;
+
+            if (lastDeckId && allDecks[lastDeckId]) {
+                deckToLoad = lastDeckId;
+            } else {
+                 // Find the first deck ID from the potentially sorted list
+                const firstDeckId = Object.keys(allDecks)[0];
+                if(firstDeckId) {
+                    deckToLoad = firstDeckId;
+                }
+            }
+
+            if (deckToLoad) {
+                 // console.log("Initializing with deck:", deckToLoad);
+                loadDeck(deckToLoad);
+            } else {
+                console.warn("Нет доступных колод для загрузки при инициализации.");
+                showInitialMessage(); // Show start message if no decks exist
+                 updateModesAvailability(false, false); // Ensure modes are disabled
+            }
+        }
+
+        // updateModeUI, switchMode, generateQuizOptions, checkQuizAnswer, checkProblemAnswer (Same logic as previous)
+         function updateModeUI() {
+            hideAnswerFeedback();
+            if (problemAnswerInput) problemAnswerInput.value = '';
+            quizAnswered = false;
+
+            const isQuiz = currentMode === 'quiz';
+            const isProblems = currentMode === 'problems';
+            const isFlashcard = currentMode === 'flashcard';
+
+            if (quizOptionsContainer) quizOptionsContainer.style.display = isQuiz ? 'flex' : 'none';
+            if (problemSolverContainer) problemSolverContainer.style.display = isProblems ? 'block' : 'none';
+            if (flipBtn) flipBtn.style.display = isFlashcard ? 'inline-flex' : 'none';
+
+            if (isQuiz) generateQuizOptions();
+        }
+
+
+        // --- MODIFIED: switchMode (Check perfection, reset session counters, handle timer) ---
+        function switchMode(newMode) {
+             const targetCard = document.querySelector(`.mode-card[data-mode="${newMode}"]`);
+             if (!targetCard || targetCard.classList.contains('disabled') || currentMode === newMode) return;
+
+             const oldMode = currentMode;
+             console.log(`Переключение режима с ${oldMode} на ${newMode}`);
+
+             // --- Check Perfection Badge for the mode we are LEAVING ---
+             checkPerfectionBadge(oldMode);
+
+             currentMode = newMode;
+
+             // Update active state visual
+             modeCards.forEach(card => card.classList.remove('active'));
+             targetCard.classList.add('active');
+
+             // Reset session counters when switching *to* a quiz/problem mode
+             if (newMode === 'quiz') { quizAttemptsInSession = 0; quizCorrectInSession = 0; }
+             if (newMode === 'problems') { problemAttemptsInSession = 0; problemCorrectInSession = 0; }
+
+             // Switch the active card deck
+             isShuffled = false;
+             if (newMode === 'problems') { currentDeckCards = [...originalProblemsDeck]; }
+             else { currentDeckCards = [...originalTermsDeck]; } // flashcard or quiz
+
+             currentCardIndex = 0;
+
+              // --- Handle Timer ---
+              if (newMode === 'quiz' || newMode === 'problems') {
+                  resetTimer(); // Reset timer before starting
+                  startTimer();
+              } else {
+                  stopTimer(); // Stop timer if switching to flashcards
+                  resetTimerDisplay();
+              }
+              // --- End Handle Timer ---
+
+             updateCard(); // Update the display for the new mode and card
+         }
+
+
+        // generateQuizOptions (Same as previous)
+        function generateQuizOptions() {
+            if (!quizOptionsContainer) return;
+            quizOptionsContainer.innerHTML = '';
+             const deckSource = originalTermsDeck;
+             const currentTermCard = currentDeckCards[currentCardIndex];
+            if (!deckSource || deckSource.length === 0 || !currentTermCard?.back?.content) {
+                quizOptionsContainer.innerHTML = `<p>${languages[currentLanguage]?.['no-options'] || 'Нет доступных вариантов.'}</p>`;
+                return;
+            }
+            const correctAnswer = currentTermCard.back.content;
+            let options = [correctAnswer];
+            let attempts = 0;
+            const maxOptions = Math.min(4, deckSource.length);
+            while (options.length < maxOptions && attempts < deckSource.length * 3) {
+                const randomIndex = Math.floor(Math.random() * deckSource.length);
+                const potentialCard = deckSource[randomIndex];
+                const potentialAnswer = potentialCard?.back?.content;
+                if (potentialAnswer && potentialAnswer !== correctAnswer && !options.includes(potentialAnswer)) {
+                    options.push(potentialAnswer);
+                }
+                attempts++;
+            }
+            shuffleArray(options);
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.classList.add('quiz-option', 'button-style');
+                 button.textContent = option;
+                button.onclick = () => checkQuizAnswer(option === correctAnswer, button);
+                quizOptionsContainer.appendChild(button);
+            });
+             renderMathJax();
+        }
+
+        // --- MODIFIED: checkQuizAnswer (Update session counters) ---
+        function checkQuizAnswer(isCorrect, selectedButton) {
+            if (quizAnswered || !currentDeckCards?.length) return;
+            quizAnswered = true;
+            showAnswerFeedback(isCorrect);
+            updateStats(isCorrect ? 'correct' : 'incorrect', 'quiz'); // Pass 'quiz' mode
+
+            const correctAnswerText = currentDeckCards[currentCardIndex].back.content;
+            quizOptionsContainer.querySelectorAll('.quiz-option').forEach(btn => {
+                btn.disabled = true;
+                const isBtnCorrectAnswer = (btn.textContent === correctAnswerText);
+                if (btn === selectedButton) btn.classList.add(isCorrect ? 'correct' : 'incorrect');
+                else if (isBtnCorrectAnswer && !isCorrect) btn.classList.add('correct');
+            });
+        }
+
+        // --- MODIFIED: checkProblemAnswer (Update session counters) ---
+        function checkProblemAnswer() {
+            if (currentMode !== 'problems' || !currentDeckCards?.length || !currentDeckCards[currentCardIndex]?.back?.content || !problemAnswerInput) return;
+            const userAnswerStr = problemAnswerInput.value.trim();
+            const correctAnswerStr = String(currentDeckCards[currentCardIndex].back.content).trim();
+            if (userAnswerStr === "") { showAnswerFeedback(false, correctAnswerStr); updateStats('incorrect', 'problems'); return; } // Pass 'problems' mode
+             const userNum = parseFloat(userAnswerStr.replace(',', '.'));
+             const correctNum = parseFloat(correctAnswerStr.replace(',', '.'));
+             let isCorrect = false;
+             if (!isNaN(userNum) && !isNaN(correctNum)) isCorrect = Math.abs(userNum - correctNum) < 0.001;
+             else isCorrect = userAnswerStr.toLowerCase() === correctAnswerStr.toLowerCase();
+
+            showAnswerFeedback(isCorrect, isCorrect ? null : correctAnswerStr);
+            updateStats(isCorrect ? 'correct' : 'incorrect', 'problems'); // Pass 'problems' mode
+        }
+
+
+        // showAnswerFeedback, hideAnswerFeedback (Same as previous)
+        function showAnswerFeedback(isCorrect, correctAnswerText = null) {
+            if (!answerFeedback) return;
+            answerFeedback.style.display = 'block';
+            let feedbackTextKey = isCorrect ? 'correct-feedback' : 'incorrect-feedback';
+            let feedbackText = languages[currentLanguage]?.[feedbackTextKey] || (isCorrect ? 'Correct! ✓' : 'Incorrect ✗');
+            if (!isCorrect && correctAnswerText != null) {
+                 feedbackText += ` <span class="correct-answer-text">"${correctAnswerText}"</span>`;
+            }
+            answerFeedback.innerHTML = feedbackText;
+            answerFeedback.className = 'answer-feedback';
+            answerFeedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+        }
+
+        function hideAnswerFeedback() {
+            if (answerFeedback) answerFeedback.style.display = 'none';
+        }
+
+        // --- MODIFIED: resetStats (Reset totalCorrect/totalAttempts) ---
+        function resetStats() {
+             // Reset global stats object
+             stats = { reviewed: 0, /* correct: 0, - removed */ streak: 0, maxStreak: 0, badgesEarned: stats.badgesEarned }; // Keep earned badges across resets? Or clear here? Let's keep them for now.
+             // earnedBadges = new Set(); // Uncomment to clear badge IDs on reset
+             viewedTermCardIndices.clear();
+
+             // Reset displayed global counters
+             totalAttempts = 0;
+             totalCorrect = 0;
+
+             // Update UI elements
+             if (cardsReviewedStat) cardsReviewedStat.textContent = '0';
+             if (correctAnswersStat) correctAnswersStat.textContent = '0'; // Display totalCorrect
+             if (accuracyStat) accuracyStat.textContent = '0%';
+             if (streakCountStat) streakCountStat.textContent = '0'; // Streak resets
+             if (totalAttemptsStat) totalAttemptsStat.textContent = '0'; // Display totalAttempts
+
+             console.log("Статистика сессии сброшена (кроме достижений).");
+
+             // Reset progress bar and card index only if a deck is loaded
+             if (currentDeckId) {
+                 currentCardIndex = 0;
+                 isShuffled = false; // Ensure deck is unshuffled on reset
+                 if (currentMode === 'problems') currentDeckCards = [...originalProblemsDeck];
+                 else currentDeckCards = [...originalTermsDeck];
+                 // updateCard(); // Avoid direct call if it causes issues, let flow handle it
+                 updateProgressBar();
+                 updateButtonStates();
+                 hideAnswerFeedback();
+             } else {
+                 updateProgressBar(true);
+                 updateButtonStates(true);
+             }
+        }
+
+        // --- MODIFIED: checkBadges (Handles streak badges) ---
+        function checkBadges() {
+            // Only check streak badges here
+            const streakBadges = [
+                { id: 'streak-5', threshold: 5, key: 'streak-5-desc', titleKey: 'streak-title' },
+                { id: 'streak-10', threshold: 10, key: 'streak-10-desc', titleKey: 'streak-title' }
+            ];
+            streakBadges.forEach(badge => {
+                if (stats.streak >= badge.threshold && !earnedBadges.has(badge.id)) {
+                    awardBadge(badge.id, badge.titleKey, badge.key);
+                }
+            });
+        }
+
+         // --- New Function: Check Perfection Badge ---
+         function checkPerfectionBadge(modeToCheck) {
+             if (!currentDeckId) return; // No deck loaded
+
+             let attempts = 0;
+             let correct = 0;
+             let badgeId = '';
+             let titleKey = '';
+             let descKey = '';
+
+             if (modeToCheck === 'quiz' && originalTermsDeck.length > 0) { // Check against original deck length
+                 attempts = quizAttemptsInSession;
+                 correct = quizCorrectInSession;
+                 badgeId = `perfection-quiz-${currentDeckId}`;
+                 titleKey = 'perfection-quiz-title';
+                 descKey = 'perfection-quiz-desc';
+                 console.log(`Checking Quiz Perfection: Attempts=${attempts}, Correct=${correct}, Required=${originalTermsDeck.length}`);
+             } else if (modeToCheck === 'problems' && originalProblemsDeck.length > 0) {
+                 attempts = problemAttemptsInSession;
+                 correct = problemCorrectInSession;
+                 badgeId = `perfection-problems-${currentDeckId}`;
+                 titleKey = 'perfection-problems-title';
+                 descKey = 'perfection-problems-desc';
+                  console.log(`Checking Problems Perfection: Attempts=${attempts}, Correct=${correct}, Required=${originalProblemsDeck.length}`);
+             }
+
+             // Award if:
+             // 1. We have a valid badge ID (meaning we were in quiz/problems mode)
+             // 2. At least one attempt was made in that session
+             // 3. Number of correct answers equals the total number of cards for that mode
+             // 4. The badge hasn't been earned already
+            if (badgeId && attempts > 0 && correct === attempts && !earnedBadges.has(badgeId)) {
+                 const requiredCount = (modeToCheck === 'quiz') ? originalTermsDeck.length : originalProblemsDeck.length;
+                 if (correct === requiredCount) { // Ensure all cards were attempted and correct
+                    awardBadge(badgeId, titleKey, descKey);
+                 } else {
+                     console.log(`Perfection check failed: Not all cards attempted/correct (Correct: ${correct}, Required: ${requiredCount})`);
+                 }
+            } else if (badgeId && earnedBadges.has(badgeId)) {
+                 console.log(`Badge ${badgeId} already earned.`);
+            }
+         }
+
+
+        // checkBadgeCompletion (Handles deck completion - logic might need refinement based on term/problem split)
+        function checkBadgeCompletion() {
+             if (currentDeckCards?.length && currentCardIndex === currentDeckCards.length - 1) {
+                 const badgeId = `completed-${currentDeckId}-${currentMode}`;
+                 if (!earnedBadges.has(badgeId)) {
+                     let deckTitle = currentDeckData?.title || currentDeckId;
+                     const completionBadge = { id: badgeId, name: `${languages[currentLanguage]['deck-completed-title'] || 'Deck Completed!'}: ${deckTitle} (${currentMode})`, description: languages[currentLanguage]['deck-completed-desc'] || "You've studied all cards in this set." };
+                     earnedBadges.add(badgeId);
+                     stats.badgesEarned.push(completionBadge);
+                     showBadgeNotification(completionBadge);
+                 }
+             }
+        }
+
+        // --- New Function to Award Badges ---
+        function awardBadge(id, titleLangKey, descLangKey) {
+            if (earnedBadges.has(id)) return; // Don't award twice
+
+            const badgeData = {
+                id: id,
+                name: languages[currentLanguage][titleLangKey] || titleLangKey, // Fallback to key
+                description: languages[currentLanguage][descLangKey] || descLangKey // Fallback to key
+            };
+
+            earnedBadges.add(id);
+            stats.badgesEarned.push(badgeData); // Add to the list of earned badges
+            showBadgeNotification(badgeData);
+            saveEarnedBadges(); // Save achievements
+            console.log(`Значок получен: ${id}`);
+        }
+
+        // --- New Function to Populate Achievements List ---
+        function populateAchievementsList() {
+            if (!achievementsList) return;
+            achievementsList.innerHTML = ''; // Clear previous list
+            loadEarnedBadges(); // Load latest earned badges
+
+            if (stats.badgesEarned.length === 0) {
+                achievementsList.innerHTML = `<li class="no-achievements" data-lang-key="no-achievements-yet">${languages[currentLanguage]['no-achievements-yet']}</li>`;
+            } else {
+                stats.badgesEarned.forEach(badge => {
+                    const li = document.createElement('li');
+                    li.classList.add('achievement-item');
+                    li.innerHTML = `
+                        <div class="achievement-icon">🏆</div>
+                        <div class="achievement-details">
+                            <h4>${badge.name}</h4>
+                            <p>${badge.description}</p>
+                        </div>
+                    `;
+                    achievementsList.appendChild(li);
+                });
+            }
+        }
+
+         // --- New Functions to Save/Load Achievements ---
+         function saveEarnedBadges() {
+             try {
+                 // Save both the set of IDs and the full badge objects
+                 localStorage.setItem('earnedBadgeIds', JSON.stringify(Array.from(earnedBadges)));
+                 localStorage.setItem('earnedBadgesData', JSON.stringify(stats.badgesEarned));
+             } catch (e) {
+                 console.error("Ошибка сохранения достижений:", e);
+             }
+         }
+
+         function loadEarnedBadges() {
+             try {
+                 const storedIds = localStorage.getItem('earnedBadgeIds');
+                 const storedData = localStorage.getItem('earnedBadgesData');
+                 if (storedIds) {
+                     earnedBadges = new Set(JSON.parse(storedIds));
+                 } else {
+                      earnedBadges = new Set();
+                 }
+                 if (storedData) {
+                     stats.badgesEarned = JSON.parse(storedData);
+                 } else {
+                     stats.badgesEarned = [];
+                 }
+             } catch (e) {
+                 console.error("Ошибка загрузки достижений:", e);
+                 earnedBadges = new Set();
+                 stats.badgesEarned = [];
+             }
+         }
+
+
+        // showBadgeNotification (Same as previous)
+        function showBadgeNotification(badge) {
+            if (!badgeNotification || !badgeDescription) return;
+            const titleEl = badgeNotification.querySelector('h3');
+            if(titleEl) titleEl.textContent = badge.name || (languages[currentLanguage]['achievement-unlocked'] || 'Достижение!');
+            badgeDescription.textContent = badge.description || (languages[currentLanguage]['new-badge'] || 'Вы получили значок!');
+            badgeNotification.style.display = 'block';
+            setTimeout(() => { if (badgeNotification) badgeNotification.style.display = 'none'; }, 4000);
+        }
+
+        // updateLanguageForElement, renumberTermHeaders, renumberProblemHeaders, addTermInputFields, addProblemInputFields, toggleDeckTypeSections, createDeck (Same logic as previous)
+         function updateLanguageForElement(element) {
+            element?.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.getAttribute('data-lang-key');
+                const translation = languages[currentLanguage]?.[key];
+                if (translation !== undefined) {
+                    if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.placeholder !== undefined) {
+                        el.placeholder = translation;
+                    }
+                    if (el.tagName === 'LABEL' || el.tagName === 'BUTTON' || el.tagName === 'H3' || el.tagName === 'H4' || el.tagName === 'OPTION') {
+                        const firstChild = el.firstChild;
+                        if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+                            firstChild.textContent = translation;
+                        } else if (el.childNodes.length > 0 && el.childNodes[0].nodeType === Node.TEXT_NODE) {
+                             el.childNodes[0].textContent = translation; // Try updating first text node if icon present
+                        } else {
+                             el.textContent = translation;
+                        }
+                    }
+                     if (el.title) el.title = translation;
+                     if (el.ariaLabel) el.ariaLabel = translation;
+                }
+            });
+        }
+
+        function renumberTermHeaders() {
+            const termInputDivs = termsInputContainer?.querySelectorAll('.term-inputs');
+            termInputDivs?.forEach((div, index) => {
+                const header = div.querySelector('.term-header');
+                const deleteBtn = div.querySelector('.delete-term-btn');
+                const newNumber = index + 1;
+                const termText = languages[currentLanguage]?.['term-header'] || 'Термин';
+                if (header) header.textContent = `${termText} ${newNumber}`;
+                if (deleteBtn) {
+                    const deleteText = `${languages[currentLanguage]?.['delete-term'] || 'Удалить Термин'} ${newNumber}`;
+                    deleteBtn.setAttribute('aria-label', deleteText);
+                    deleteBtn.setAttribute('title', deleteText);
+                }
+                div.querySelectorAll('input, textarea').forEach(input => {
+                    const baseId = input.id.replace(/\d+$/, '');
+                    input.id = `${baseId}${newNumber}`;
+                    const label = div.querySelector(`label[for^="${baseId}"]`);
+                    if (label) label.setAttribute('for', input.id);
+                });
+            });
+            termInputCounter = termInputDivs?.length || 0;
+        }
+
+        function renumberProblemHeaders() {
+            const problemInputDivs = problemsInputContainer?.querySelectorAll('.problem-inputs');
+            problemInputDivs?.forEach((div, index) => {
+                const header = div.querySelector('.problem-header');
+                const deleteBtn = div.querySelector('.delete-problem-btn');
+                const newNumber = index + 1;
+                const problemText = languages[currentLanguage]?.['problem-header'] || 'Задача';
+                if (header) header.textContent = `${problemText} ${newNumber}`;
+                if (deleteBtn) {
+                     const deleteText = `${languages[currentLanguage]?.['delete-problem'] || 'Удалить Задачу'} ${newNumber}`;
+                    deleteBtn.setAttribute('aria-label', deleteText);
+                    deleteBtn.setAttribute('title', deleteText);
+                }
+                 div.querySelectorAll('input, textarea').forEach(input => {
+                     const baseId = input.id.replace(/\d+$/, '');
+                     input.id = `${baseId}${newNumber}`;
+                     const label = div.querySelector(`label[for^="${baseId}"]`);
+                     if (label) label.setAttribute('for', input.id);
+                 });
+            });
+            problemInputCounter = problemInputDivs?.length || 0;
+        }
+
+        function addTermInputFields() {
+            if (!termsInputContainer) return;
+            termInputCounter++;
+            const div = document.createElement('div');
+            div.classList.add('term-inputs');
+            div.dataset.cardNumber = termInputCounter;
+            const deleteText = `${languages[currentLanguage]?.['delete-term'] || 'Удалить Термин'} ${termInputCounter}`;
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 class="term-header">${languages[currentLanguage]?.['term-header'] || 'Термин'} ${termInputCounter}</h4>
+                    <button type="button" class="delete-term-btn" aria-label="${deleteText}" title="${deleteText}">🗑️</button>
+                </div>
+                <label for="termFrontTitle${termInputCounter}" data-lang-key="card-front-title-label">${languages[currentLanguage]?.['card-front-title-label'] || 'Тема/Термин:'}</label>
+                <input type="text" id="termFrontTitle${termInputCounter}" class="term-front-title">
+                <label for="termFrontContent${termInputCounter}" data-lang-key="card-front-content-label">${languages[currentLanguage]?.['card-front-content-label'] || 'Вопрос/Описание:'}</label>
+                <textarea id="termFrontContent${termInputCounter}" class="term-front-content" required></textarea>
+                <label for="termBackFormula${termInputCounter}" data-lang-key="card-back-formula-label">${languages[currentLanguage]?.['card-back-formula-label'] || 'Формула:'}</label>
+                <textarea id="termBackFormula${termInputCounter}" class="term-back-formula"></textarea>
+                <label for="termBackUnits${termInputCounter}" data-lang-key="card-back-units-label">${languages[currentLanguage]?.['card-back-units-label'] || 'Ед. изм.:'}</label>
+                <input type="text" id="termBackUnits${termInputCounter}" class="term-back-units">
+                <label for="termBackVars${termInputCounter}" data-lang-key="card-back-vars-label">${languages[currentLanguage]?.['card-back-vars-label'] || 'Обозначения:'}</label>
+                <textarea id="termBackVars${termInputCounter}" class="term-back-vars"></textarea>
+                <label for="termBackContent${termInputCounter}" data-lang-key="card-back-content-label">${languages[currentLanguage]?.['card-back-content-label'] || 'Объяснение:'}</label>
+                <textarea id="termBackContent${termInputCounter}" class="term-back-content"></textarea>
+            `;
+            termsInputContainer.appendChild(div);
+            const deleteBtn = div.querySelector('.delete-term-btn');
+            deleteBtn?.addEventListener('click', () => { div.remove(); renumberTermHeaders(); });
+            // console.log(`Добавлено поле для термина ${termInputCounter}`);
+        }
+
+        function addProblemInputFields() {
+            if (!problemsInputContainer) return;
+            problemInputCounter++;
+            const div = document.createElement('div');
+            div.classList.add('problem-inputs');
+            div.dataset.cardNumber = problemInputCounter;
+             const deleteText = `${languages[currentLanguage]?.['delete-problem'] || 'Удалить Задачу'} ${problemInputCounter}`;
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 class="problem-header">${languages[currentLanguage]?.['problem-header'] || 'Задача'} ${problemInputCounter}</h4>
+                    <button type="button" class="delete-problem-btn" aria-label="${deleteText}" title="${deleteText}">🗑️</button>
+                </div>
+                <label for="problemTitle${problemInputCounter}" data-lang-key="problem-title-label">${languages[currentLanguage]?.['problem-title-label'] || 'Название задачи:'}</label>
+                <input type="text" id="problemTitle${problemInputCounter}" class="problem-title">
+                <label for="problemContent${problemInputCounter}" data-lang-key="problem-content-label">${languages[currentLanguage]?.['problem-content-label'] || 'Задача:'}</label>
+                <textarea id="problemContent${problemInputCounter}" class="problem-content" required></textarea>
+                <label for="problemAnswer${problemInputCounter}" data-lang-key="problem-answer-label">${languages[currentLanguage]?.['problem-answer-label'] || 'Ответ (число):'}</label>
+                <input type="text" id="problemAnswer${problemInputCounter}" class="problem-answer" required placeholder="${languages[currentLanguage]?.['input-placeholder'] || '0'}">
+            `;
+            problemsInputContainer.appendChild(div);
+            const deleteBtn = div.querySelector('.delete-problem-btn');
+            deleteBtn?.addEventListener('click', () => { div.remove(); renumberProblemHeaders(); });
+            // console.log(`Добавлено поле для задачи ${problemInputCounter}`);
+        }
+
+        function toggleDeckTypeSections() {
+            if (!deckTypeInput || !termsSection || !problemsSection) return;
+            const selectedType = deckTypeInput.value;
+            termsSection.style.display = (selectedType === 'terms' || selectedType === 'combined') ? 'block' : 'none';
+            problemsSection.style.display = (selectedType === 'problems' || selectedType === 'combined') ? 'block' : 'none';
+        }
+
+        function createDeck(event) {
+            event.preventDefault();
+            if (!deckTitleInput || !deckTypeInput || !termsInputContainer || !problemsInputContainer) return;
+            const deckTitle = deckTitleInput.value.trim();
+            const deckDesc = deckDescInput?.value.trim() || '';
+            const deckType = deckTypeInput.value;
+            if (!deckTitle) {
+                alert(languages[currentLanguage]?.['deck-title-required'] || 'Название колоды обязательно.');
+                return;
+            }
+            const collectedTermsCards = [];
+            const collectedProblemsCards = [];
+            if (deckType === 'terms' || deckType === 'combined') {
+                termsInputContainer.querySelectorAll('.term-inputs').forEach((termDiv) => {
+                    const frontTitle = termDiv.querySelector('.term-front-title')?.value.trim();
+                    const frontContent = termDiv.querySelector('.term-front-content')?.value.trim();
+                    const backFormula = termDiv.querySelector('.term-back-formula')?.value.trim();
+                    const backUnits = termDiv.querySelector('.term-back-units')?.value.trim();
+                    const backVars = termDiv.querySelector('.term-back-vars')?.value.trim();
+                    const backContent = termDiv.querySelector('.term-back-content')?.value.trim();
+                    if (frontContent) { // Require front content
+                        collectedTermsCards.push({ front: { title: frontTitle || '', content: frontContent }, back: { formula: backFormula || '', units: backUnits || '', vars: backVars || '', content: backContent || '' } });
+                    }
+                });
+            }
+            if (deckType === 'problems' || deckType === 'combined') {
+                problemsInputContainer.querySelectorAll('.problem-inputs').forEach((problemDiv) => {
+                    const title = problemDiv.querySelector('.problem-title')?.value.trim();
+                    const content = problemDiv.querySelector('.problem-content')?.value.trim();
+                    const answer = problemDiv.querySelector('.problem-answer')?.value.trim();
+                    if (content && answer) { // Require content and answer
+                        collectedProblemsCards.push({ front: { title: title || '', content: content }, back: { content: answer } });
+                    }
+                });
+            }
+            if ((deckType === 'terms' && collectedTermsCards.length === 0) || (deckType === 'problems' && collectedProblemsCards.length === 0) || (deckType === 'combined' && collectedTermsCards.length === 0 && collectedProblemsCards.length === 0)) {
+                alert(languages[currentLanguage]?.['add-one-card-alert'] || 'Добавьте хотя бы один валидный термин или задачу.');
+                return;
+            }
+            const deckId = `custom-deck-${Date.now()}`;
+            const newDeckData = { title: deckTitle, description: deckDesc, deckType: deckType };
+            if (deckType === 'terms') newDeckData.cards = collectedTermsCards;
+            else if (deckType === 'problems') newDeckData.cards = collectedProblemsCards;
+            else { newDeckData.termsCards = collectedTermsCards; newDeckData.problemsCards = collectedProblemsCards; }
+            customDecks[deckId] = newDeckData;
+            saveCustomDecksToLocalStorage();
+            combineAllDecks();
+            populateDeckList();
+            alert(`${languages[currentLanguage]?.['deck-created-success'] || 'Колода'} "${deckTitle}" ${languages[currentLanguage]?.['created-successfully'] || 'успешно создана!'}`);
+            if (createDeckModal) createDeckModal.style.display = 'none';
+            loadDeck(deckId);
+            createDeckForm.reset();
+            termsInputContainer.innerHTML = ''; problemsInputContainer.innerHTML = '';
+            termInputCounter = 0; problemInputCounter = 0;
+            addTermInputFields(); addProblemInputFields();
+            toggleDeckTypeSections();
+        }
+
+
+        // --- Event Listeners (Added achievements modal listener) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEarnedBadges(); // Load achievements on start
+            initializeTheme();
+            initializeLanguage();
+            initializeDecks();
+
+            // Modals
+            chooseDeckBtn?.addEventListener('click', () => { if (deckModal) { populateDeckList(); deckModal.style.display = 'flex'; } });
+            closeDeckModalBtn?.addEventListener('click', () => { if (deckModal) deckModal.style.display = 'none'; });
+            createDeckBtn?.addEventListener('click', () => { if (createDeckModal) { /* ... reset form ... */ createDeckModal.style.display = 'flex'; } });
+            closeCreateDeckModalBtn?.addEventListener('click', () => { if (createDeckModal) createDeckModal.style.display = 'none'; });
+            // New Achievements Modal Listener
+            achievementsBtn?.addEventListener('click', () => { if (achievementsModal) { populateAchievementsList(); achievementsModal.style.display = 'flex'; } });
+            closeAchievementsModalBtn?.addEventListener('click', () => { if (achievementsModal) achievementsModal.style.display = 'none'; });
+
+            // Close modals on background click
+            window.addEventListener('click', (e) => {
+                if (e.target === deckModal) deckModal.style.display = 'none';
+                if (e.target === createDeckModal) createDeckModal.style.display = 'none';
+                if (e.target === achievementsModal) achievementsModal.style.display = 'none'; // Close achievements modal
+                if (languageMenu && languageToggle && !languageToggle.contains(e.target) && !languageMenu.contains(e.target)) languageMenu.style.display = 'none';
+            });
+
+            // Settings
+            themeToggle?.addEventListener('click', toggleTheme);
+            languageToggle?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if(languageMenu) languageMenu.style.display = languageMenu.style.display === 'block' ? 'none' : 'block';
+            });
+            languageMenu?.addEventListener('click', (e) => {
+                const langOption = e.target.closest('.language-option');
+                if (langOption) {
+                    const lang = langOption.dataset.lang;
+                    if (lang && languages[lang]) { updateLanguage(lang); languageMenu.style.display = 'none'; }
+                }
+            });
+
+            // Card Controls
+            prevBtn?.addEventListener('click', prevCard);
+            nextBtn?.addEventListener('click', nextCard);
+            flipBtn?.addEventListener('click', flipCard);
+            shuffleBtn?.addEventListener('click', toggleShuffle);
+
+            // Mode Selection
+            modeCards.forEach(card => { card.addEventListener('click', () => { if (!card.classList.contains('disabled')) { const mode = card.dataset.mode; if(mode) switchMode(mode); } }); });
+
+            // Problem Solving
+            submitProblemAnswerBtn?.addEventListener('click', checkProblemAnswer);
+            problemAnswerInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkProblemAnswer(); });
+            problemAnswerInput?.addEventListener('input', hideAnswerFeedback);
+
+            // Stats
+            resetStatsBtn?.addEventListener('click', resetStats);
+
+            // Deck Creation Form
+            createDeckForm?.addEventListener('submit', createDeck);
+            deckTypeInput?.addEventListener('change', toggleDeckTypeSections);
+            addAnotherTermBtn?.addEventListener('click', addTermInputFields);
+            addAnotherProblemBtn?.addEventListener('click', addProblemInputFields);
+
+            console.log("Приложение инициализировано.");
+        });
+    </script>
+</body>
+</html>
