@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-lang-key="html-title">FlashLearn | Interactive Flashcards</title>
+    <link rel="icon" href="icon.png" type="image/png">
+    <style>
+        :root {
+            --primary-color: #4e54c8;
+            --secondary-color: #8f94fb;
+            --background-light: #f5f7ff;
+            --text-dark: #333;
+            --text-light: #f5f5f5;
+            --success-color: #4caf50;
+            --error-color: #f44336;
+            --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.3s;
+            --card-bg-front: #ffffff;
+            --card-bg-back: var(--secondary-color);
+            --card-text-front: var(--text-dark);
+            --card-text-back: white;
+        }
+        .dark-mode {
+            --primary-color: #5d65df; --secondary-color: #9b9fff;
+            --background-light: #1e2133; --text-dark: #f5f5f5; --text-light: #333;
+            --card-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+            --card-bg-front: #2d2d2d; --card-bg-back: #4d4daa;
+            --card-text-front: #f5f5f5; --card-text-back: white;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { background-color: var(--background-light); color: var(--text-dark); transition: background-color var(--transition-speed), color var(--transition-speed); min-height: 100vh; display: flex; flex-direction: column; font-size: 16px; }
+        header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+        header h1 { font-size: 2rem; margin-bottom: 0.3rem;}
+        header p { font-size: 1rem; opacity: 0.9; }
+        .container { width: 90%; max-width: 1200px; margin: 2rem auto; padding: 0 1rem; flex: 1; }
+        .settings-bar { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid #dee2e6; margin-bottom: 1rem; background-color: var(--card-bg-front); border-radius: 8px; box-shadow: var(--card-shadow); }
+        .dark-mode .settings-bar { border-bottom-color: #444; }
+        .settings-left, .settings-right { display: flex; gap: 0.8rem; align-items: center; }
+        .theme-toggle, .language-toggle, #musicToggleBtn { background: none; border: none; cursor: pointer; font-size: 1.6rem; color: var(--secondary-color); padding: 0.3rem; transition: color 0.2s; }
+        .theme-toggle:hover, .language-toggle:hover, #musicToggleBtn:hover { color: var(--primary-color); }
+        .language-dropdown { position: relative; display: inline-block; }
+        .language-menu { display: none; position: absolute; right: 0; top: 110%; margin-top: 5px; background-color: var(--card-bg-front); color: var(--card-text-front); min-width: 120px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 8px; z-index: 100; border: 1px solid #eee; }
+        .dark-mode .language-menu { border-color: #444; }
+        .language-menu.show { display: block; }
+        .language-option { padding: 0.8rem 1rem; cursor: pointer; transition: background-color 0.2s; font-size: 0.95rem; }
+        .language-option:hover { background-color: rgba(0, 123, 255, 0.1); }
+        .dark-mode .language-option:hover { background-color: rgba(77, 171, 247, 0.15); }
+        .music-controls { display: flex; align-items: center; gap: 0.5rem; }
+        #volumeSlider { width: 80px; height: 5px; cursor: pointer; appearance: none; background: #ddd; border-radius: 5px; outline: none;}
+        #volumeSlider::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; background: var(--primary-color); border-radius: 50%; cursor: pointer; }
+        #volumeSlider::-moz-range-thumb { width: 14px; height: 14px; background: var(--primary-color); border-radius: 50%; cursor: pointer; border: none; }
+        .dark-mode #volumeSlider { background: #555; }
+        #currentDeckDisplay { text-align: center; margin-bottom: 1.5rem; font-size: 0.95rem; color: var(--secondary-color); }
+        #currentDeckDisplay span { font-weight: 600; color: var(--text-dark); }
+        .dark-mode #currentDeckDisplay span { color: var(--text-dark); }
+        button, .button-style { background-color: var(--primary-color); color: white; border: none; padding: 0.7rem 1.3rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; transition: background-color 0.2s, transform 0.1s, opacity 0.2s, box-shadow 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; text-align: center; justify-content: center; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button:hover:not(:disabled), .button-style:hover:not(:disabled) { background-color: #0056b3; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .dark-mode button:hover:not(:disabled), .dark-mode .button-style:hover:not(:disabled) { background-color: #69b7f9; }
+        button:active:not(:disabled), .button-style:active:not(:disabled) { transform: scale(0.98); box-shadow: none; }
+        button:disabled, .button-style:disabled { opacity: 0.6; cursor: not-allowed; background-color: #adb5bd !important; color: #fff !important; border-color: transparent !important; box-shadow: none; }
+        .button-secondary { background-color: var(--primary-color); }
+        .button-secondary:hover:not(:disabled) { background-color: #0056b3; }
+        .button-outline { background-color: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); box-shadow: none; }
+        .button-outline:hover:not(:disabled) { background-color: rgba(0, 123, 255, 0.1); }
+        .dark-mode .button-outline { color: var(--primary-color); border-color: var(--primary-color); }
+        .dark-mode .button-outline:hover:not(:disabled) { background-color: rgba(77, 171, 247, 0.15); }
+        .button-outline:disabled { border-color: #ccc !important; color: #aaa !important; background-color: transparent !important; opacity: 0.5; }
+        .study-modes { display: flex; justify-content: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .mode-card { background-color: var(--card-bg-front); color: var(--card-text-front); border-radius: 10px; padding: 1.5rem; width: 200px; text-align: center; cursor: pointer; box-shadow: var(--card-shadow); transition: transform 0.3s, border-color 0.3s, opacity 0.3s; border: 2px solid transparent; }
+        .mode-card:hover:not(.disabled) { transform: translateY(-5px); border-color: var(--secondary-color); }
+        .mode-card.active { border-color: var(--primary-color); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0, 123, 255, 0.2); }
+        .mode-card.disabled { opacity: 0.4; cursor: not-allowed; background-color: #eee; border-color: transparent; transform: none; box-shadow: none; pointer-events: none; }
+        .dark-mode .mode-card.disabled { background-color: #333; }
+        .mode-icon { font-size: 2.2rem; margin-bottom: 1rem; color: var(--primary-color); }
+        .mode-card h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+        .mode-card p { font-size: 0.9rem; color: #6c757d; }
+        .dark-mode .mode-card p { color: #adb5bd; }
+        .progress-timer-container { display: flex; justify-content: space-between; align-items: center; max-width: 700px; margin: 0 auto 2rem; gap: 1rem; }
+        .progress-container { flex-grow: 1; background-color: #e9ecef; border-radius: 10px; overflow: hidden; height: 12px; }
+        .dark-mode .progress-container { background-color: #3a3a3a; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary-color), #0056b3); transition: width 0.3s ease; width: 0%; border-radius: 10px; }
+        #timerDisplay { font-size: 1rem; color: var(--timer-color); font-weight: 500; min-width: 50px; text-align: right; visibility: hidden; }
+        #timerDisplay.visible { visibility: visible; }
+        .flashcard-area { perspective: 1000px; min-height: 380px; margin-bottom: 2rem; }
+        .flashcard-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .flashcard { width: 700px; max-width: 100%; height: 380px; position: relative; cursor: pointer; transform-style: preserve-3d; transition: transform 0.6s; box-shadow: var(--card-shadow); border-radius: 12px; }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 2.5rem; border-radius: 12px; text-align: center; overflow-y: auto; border: 1px solid #eee;}
+        .flashcard-front { background-color: var(--card-bg-front); color: var(--card-text-front); }
+        .flashcard-back { transform: rotateY(180deg); background-color: var(--card-bg-back); color: var(--card-text-back); }
+        .dark-mode .flashcard-front, .dark-mode .flashcard-back { border-color: #333; }
+        .flashcard-term-topic { font-size: 1.8rem; margin-bottom: 0.8rem; font-weight: 600; color: var(--primary-color); }
+        .flashcard-term-prompt { font-size: 1rem; color: #6c757d; margin-bottom: 1rem; }
+        .dark-mode .flashcard-term-prompt { color: #adb5bd; }
+        .flashcard-back-section { margin-bottom: 0.8rem; width: 100%; text-align: left; padding-left: 1rem;}
+        .flashcard-back-section strong { display: block; margin-bottom: 0.3rem; font-size: 0.95rem; color: var(--primary-color); font-weight: 600;}
+        .flashcard-back-content { font-size: 1rem; line-height: 1.6; }
+        .flashcard-problem-text { font-size: 1.15rem; line-height: 1.65; text-align: left; width: 100%; margin-top: 0.5rem;}
+        .flashcard-problem-answer { font-size: 1.6rem; font-weight: bold; color: var(--success-color); margin-top: 1.5rem; }
+        @keyframes cardEntrance { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .card-animation { animation: cardEntrance 0.4s ease-out; }
+        .quiz-options { display: none; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 1.5rem; max-width: 700px; margin-left: auto; margin-right: auto;}
+        .quiz-option { flex-basis: calc(50% - 1rem); text-align: center; }
+        .quiz-option.correct { background-color: var(--success-color); color: white; border-color: var(--success-color); }
+        .quiz-option.incorrect { background-color: var(--error-color); color: white; border-color: var(--error-color); }
+        .problem-solver { display: none; width: 100%; max-width: 700px; margin: 1.5rem auto; text-align: center; }
+        .problem-solver label { display: block; margin-bottom: 0.8rem; font-size: 1rem; font-weight: 500; }
+        .problem-solver input[type="number"], .problem-solver input[type="text"] { width: 60%; padding: 0.8rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1.1rem; text-align: center; background-color: var(--card-bg-front); color: var(--card-text-front); margin: 0 auto 1rem auto; display: block; }
+        .dark-mode .problem-solver input { border-color: #555; background-color: #2b2b2b; }
+        .problem-solver input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .submit-answer { width: auto; min-width: 150px; }
+        .math-small-wrapper {
+          max-width: 100%;
+          overflow-x: auto;
+          padding-bottom: 0.3em;
+        }
+        .math-small-wrapper svg {
+          transform: scale(0.85);
+          transform-origin: left top;
+          display: inline-block;
+        }
+        .math-small-wrapper mjx-container {
+          display: inline-block;
+        }
+        .answer-feedback {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 1.05rem;
+        }
+        .answer-feedback.correct {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        .answer-feedback.incorrect {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        .controls { display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; flex-wrap: wrap; }
+        .stats-section { background-color: var(--card-bg-front); color: var(--card-text-front); padding: 1.5rem 2rem; border-radius: 12px; margin-top: 2.5rem; box-shadow: var(--card-shadow); border: 1px solid #eee;}
+        .dark-mode .stats-section { border-color: #333; }
+        .stats-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+        .dark-mode .stats-header { border-bottom-color: #444; }
+        .stats-header h2 { font-size: 1.4rem; margin: 0; }
+        #resetStatsBtn { font-size: 0.85rem; padding: 0.5rem 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+        .stat-card { background-color: var(--background-light); color: var(--text-dark); padding: 1rem; border-radius: 8px; text-align: center; border: 1px solid #eee;}
+        .dark-mode .stat-card { background-color: #252525; border-color: #444; }
+        .stat-value { font-size: 1.8rem; font-weight: 600; color: var(--primary-color); margin-bottom: 0.5rem; }
+        .stat-label { color: var(--secondary-color); font-size: 0.85rem; text-transform: uppercase; }
+        .dark-mode .stat-label { color: #adb5bd; }
+        .modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow-y: auto; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); animation: fadeIn 0.3s ease; align-items: center; justify-content: center; padding: 1rem; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content { background-color: var(--card-bg-front); color: var(--card-text-front); padding: 2rem; border-radius: 12px; width: 90%; max-width: 700px; max-height: 90vh; overflow-y: auto; position: relative; animation: slideIn 0.3s ease-out; margin: auto; }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+        .dark-mode .modal-header { border-bottom-color: #444;}
+        .modal-header h2 { font-size: 1.5rem; margin: 0; }
+        .close-modal { background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--secondary-color); padding: 0; line-height: 1; opacity: 0.7; position: absolute; top: 1rem; right: 1.5rem;}
+        .close-modal:hover { opacity: 1; color: var(--error-color); }
+        .deck-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; list-style: none; padding: 0;}
+        .deck-item { background-color: var(--background-light); color: var(--text-dark); padding: 1.2rem; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; border: 1px solid #eee; }
+        .dark-mode .deck-item { background-color: #252525; border-color: #444; }
+        .deck-item:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); border-color: var(--primary-color); }
+        .deck-title { font-weight: 600; font-size: 1.15rem; margin-bottom: 0.5rem; color: var(--primary-color); }
+        .deck-info { color: #555; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .dark-mode .deck-info { color: #bbb; }
+        .delete-deck-btn { position: absolute; top: 8px; right: 8px; background: rgba(220, 53, 69, 0.1); color: var(--error-color); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 50%; width: 28px; height: 28px; font-size: 1rem; line-height: 28px; text-align: center; cursor: pointer; opacity: 0.8; transition: opacity 0.2s, background-color 0.2s; padding: 0; }
+        .deck-item:hover .delete-deck-btn { opacity: 1; background: rgba(220, 53, 69, 0.2); }
+        .create-deck-form label { display: block; margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; }
+        .create-deck-form select { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; background-color: var(--background-light); color: var(--text-dark); margin-bottom: 1rem; }
+        .dark-mode .create-deck-form select { background-color: #252525; border-color: #555; }
+        .create-deck-form input[type="text"], .create-deck-form textarea { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; background-color: var(--background-light); color: var(--text-dark); margin-bottom: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .dark-mode .create-deck-form input[type="text"], .dark-mode .create-deck-form textarea { background-color: #252525; border-color: #555;}
+        .create-deck-form input[type="text"]:focus, .create-deck-form textarea:focus, .create-deck-form select:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+        .create-deck-form textarea { min-height: 80px; resize: vertical; }
+        .create-deck-form button[type="submit"] { margin-top: 1.5rem; width: 100%; font-size: 1.1rem; padding: 0.9rem 1.5rem; }
+        .add-card-section { border-top: 1px solid #eee; margin-top: 2rem; padding-top: 1.5rem; }
+        .dark-mode .add-card-section { border-top-color: #444;}
+        .add-card-section h3 { margin-bottom: 1rem; font-size: 1.3rem; }
+        .term-inputs, .problem-inputs { border: 1px solid #eee; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 8px; background-color: rgba(0,0,0,0.02); position: relative; }
+        .dark-mode .term-inputs, .dark-mode .problem-inputs { background-color: rgba(255,255,255,0.04); border-color: #444;}
+        .term-inputs h4, .problem-inputs h4 { margin-bottom: 1rem; font-size: 1.1rem; color: var(--primary-color); }
+        .delete-term-btn, .delete-problem-btn { position: absolute; top: 10px; right: 10px; background: transparent; color: var(--error-color); border: none; padding: 0.2rem 0.5rem; font-size: 1.4rem; cursor: pointer; line-height: 1; opacity: 0.6; transition: opacity 0.2s; }
+        .delete-term-btn:hover, .delete-problem-btn:hover { opacity: 1; }
+        #addAnotherTermBtn, #addAnotherProblemBtn { width: 100%; margin-top: 0.5rem; }
+        .close-modal { background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--secondary-color); padding: 0; line-height: 1; opacity: 0.7; position: absolute; top: 1rem; right: 1.5rem;}
+        .close-modal:hover { opacity: 1; color: var(--error-color); }
+        .badge-earned { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background-color: rgba(0,0,0,0.85); color: white; padding: 2rem 3rem; border-radius: 12px; text-align: center; z-index: 1100; display: none; animation: badgeEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes badgeEntrance { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+        .badge-icon { font-size: 3rem; color: gold; margin-bottom: 1rem; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .badge-earned h3 { margin-bottom: 0.5rem; font-size: 1.4rem; }
+        .badge-earned p { font-size: 1rem; opacity: 0.9; }
+        #achievementsList { list-style: none; padding: 0; max-height: 60vh; overflow-y: auto; }
+        .achievement-item { background-color: var(--background-light); color: var(--text-dark); padding: 1rem 1.5rem; margin-bottom: 0.8rem; border-radius: 8px; border: 1px solid #eee; display: flex; align-items: center; gap: 1rem; }
+        .dark-mode .achievement-item { background-color: #252525; border-color: #444; }
+        .achievement-icon { font-size: 2rem; color: gold; }
+        .achievement-details h4 { margin: 0 0 0.3rem 0; font-size: 1.1rem; color: var(--primary-color); }
+        .achievement-details p { margin: 0; font-size: 0.9rem; color: var(--secondary-color); }
+        .dark-mode .achievement-details p { color: #adb5bd; }
+        #achievementsList li:empty { display: none; }
+        #achievementsList .no-achievements { text-align: center; padding: 2rem; color: var(--secondary-color); }
+        footer { background-color: #343a40; color: #adb5bd; text-align: center; padding: 1.5rem; margin-top: 3rem; font-size: 0.9rem; }
+        .dark-mode footer { background-color: #111; }
+        .math-small mjx-container {
+          font-size: 14px !important;
+          line-height: 1 !important;
+        }
+        .math-small-wrapper::-webkit-scrollbar {
+          height: 6px;
+        }
+        .math-small-wrapper::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .math-small-wrapper::-webkit-scrollbar-thumb {
+          background-color: #bbb;
+          border-radius: 4px;
+          transition: background 0.3s;
+        }
+        .math-small-wrapper::-webkit-scrollbar-thumb:hover {
+          background-color: #888;
+        }
+        .math-small-wrapper {
+          scrollbar-width: thin;
+          scrollbar-color: #bbb transparent;
+        }
+        .math-small svg {
+          transform: scale(1);
+          transform-origin: left top;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+        .modal-header {
+          display: flex;
+          justify-content: center;
+        }
+        @media (max-width: 768px) { .container { width: 95%; margin: 1rem auto; } .flashcard { height: auto; min-height: 320px; } .flashcard-front, .flashcard-back { padding: 1.5rem; } .flashcard-term-topic { font-size: 1.5rem; } .flashcard-content, .flashcard-problem-text, .flashcard-back-content { font-size: 1rem; } .controls { gap: 0.5rem; } button, .button-style { padding: 0.7rem 1.2rem; font-size: 0.9rem; } .settings-bar { justify-content: center; } .study-modes { gap: 0.5rem; } .mode-card { width: calc(33% - 0.5rem); padding: 1rem; } .stat-value { font-size: 1.5rem; } .modal-content { max-width: 95%; padding: 1.5rem; } .quiz-option { flex-basis: 100%; } .progress-timer-container { flex-direction: column; align-items: stretch; gap: 0.5rem;} #timerDisplay { text-align: center;} }
+        @media (max-width: 480px) { .flashcard { min-height: 300px; } .settings-bar { flex-direction: column; gap: 0.8rem; } .settings-left, .settings-right { width: 100%; justify-content: space-around;} .mode-card { width: calc(50% - 0.5rem); } .stats-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem;} .stat-card { padding: 0.8rem; } .stat-value { font-size: 1.3rem; } header h1 {font-size: 1.6rem;} header p {font-size: 0.9rem;} .deck-list { grid-template-columns: 1fr; } }
+    </style>
+    <script>
+        window.MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global',
+            scale: 1.5
+          }
+        };
+      </script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+</head>
+<body>
+    <audio id="backgroundMusic" loop src="background.mp3"></audio><header>
+        <h1 id="header-title" data-lang-key="header-title">FlashLearn | Interactive Flashcards</h1>
+        <p id="header-subtitle" data-lang-key="header-subtitle">Interactive Physics Learning</p>
+    </header>
+
+    <div class="settings-bar">
+        <div class="settings-left">
+            <button id="chooseDeckBtn" class="button-outline" data-lang-key="choose-deck">📔 Choose a Deck</button>
+            <button id="createDeckBtn" class="button-outline" data-lang-key="create-deck">✍️ Create Deck</button>
+            <button id="achievementsBtn" class="button-outline" data-lang-key="achievements">🏆 Achievements</button> </div>
+        <div class="settings-right">
+            <div class="music-controls">
+                <button id="musicToggleBtn" data-lang-key-title="play-music" title="Вкл. музыку" aria-label="Вкл/Выкл музыку">🔊</button>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5" data-lang-key-title="volume" title="Громкость">
+           </div>
+             <div class="language-dropdown">
+                <button id="languageToggle" class="language-toggle" aria-label="Select Language" data-lang-key="select-language" title="Select Language">🌐</button>
+                <div id="languageMenu" class="language-menu">
+                    <div class="language-option" data-lang="en">🇺🇸 English</div>
+                    <div class="language-option" data-lang="ru">🇷🇺 Русский</div>
+                    <div class="language-option" data-lang="kk">🇰🇿 Қазақша</div>
+                    <div class="language-option" data-lang="es">🇪🇸 Español</div>
+                </div>
+            </div>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" data-lang-key="toggle-theme" title="Toggle theme">🌙</button>
+            <button id="aboutBtn" class="button-outline" data-lang-key="about" title="About">❔</button> </div>
+        </div>
+    </div>
+
+     <div id="currentDeckDisplay" class="container" data-lang-key="current-deck-label">Current Deck: <span></span></div>
+
+
+    <div class="container">
+        <div class="study-modes">
+            <div class="mode-card active" data-mode="flashcard" id="flashcardModeCard">
+                <div class="mode-icon">📖</div>
+                <h3 data-lang-key="mode-flashcards">Terms</h3>
+                <p data-lang-key="mode-flashcards-desc">Learn concepts</p>
+            </div>
+            <div class="mode-card" data-mode="quiz" id="quizModeCard">
+                <div class="mode-icon">🧠</div>
+                <h3 data-lang-key="mode-quiz">Quiz</h3>
+                <p data-lang-key="mode-quiz-desc">Test knowledge</p>
+            </div>
+            <div class="mode-card" data-mode="problems" id="problemsModeCard">
+                <div class="mode-icon">📝</div>
+                <h3 data-lang-key="mode-problems">Problems</h3>
+                <p data-lang-key="mode-problems-desc">Решение задач</p>
+            </div>
+        </div>
+
+        <div class="progress-timer-container">
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div id="timerDisplay">00:00</div> </div>
+
+
+        <div class="flashcard-area">
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-front"></div>
+                    <div class="flashcard-back"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="problem-solver" id="problemSolverContainer">
+            <label for="problemAnswerInput" data-lang-key="problem-input-label">Enter answer (number):</label>
+            <input type="number" id="problemAnswerInput" placeholder="0" step="any">
+            <button class="submit-answer button-style" id="submitProblemAnswer" data-lang-key="submit-answer">Submit Answer</button>
+        </div>
+        <div class="answer-feedback" id="answerFeedback"></div>
+
+        <div class="controls">
+            <button id="prevBtn" class="button-secondary" disabled>
+                <span>❮</span>&nbsp;<span data-lang-key="previous">Previous</span>
+            </button>
+            <button id="flipBtn" data-lang-key="flip-card">
+                Flip
+            </button>
+            <button id="nextBtn">
+                <span data-lang-key="next">Next</span>&nbsp;<span>❯</span>
+            </button>
+            <button id="shuffleBtn" class="button-outline" data-lang-key="shuffle">
+                Shuffle
+            </button>
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-header">
+                <h2 data-lang-key="learning-progress">Learning Progress</h2>
+                <button id="resetStatsBtn" class="button-outline" data-lang-key="reset-stats" title="Сбросить статистику сессии">⟲ Reset</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="cardsReviewed">0</div><div class="stat-label" data-lang-key="cards-reviewed">Reviewed</div></div>
+                <div class="stat-card"><div class="stat-value" id="correctAnswers">0</div><div class="stat-label" data-lang-key="correct-answers">Correct</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalAttempts">0</div><div class="stat-label" data-lang-key="total-attempts">Attempts</div></div>
+                <div class="stat-card"><div class="stat-value" id="accuracy">0%</div><div class="stat-label" data-lang-key="accuracy-rate">Accuracy</div></div>
+                <div class="stat-card"><div class="stat-value" id="streakCount">0</div><div class="stat-label" data-lang-key="current-streak">Steak</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="deckModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-lang-key="choose-deck-modal">Choose a Deck</h2>
+            </div>
+            <ul class="deck-list" id="deckList"></ul>
+        </div>
+    </div>
+
+     <div class="modal" id="createDeckModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="createDeckModalTitle" data-lang-key="create-new-deck-modal">Create New Deck</h2>
+            </div>
+            <form id="createDeckForm" class="create-deck-form">
+                <label for="deckTitleInput" data-lang-key="deck-title-label">Deck Title:</label>
+                <input type="text" id="deckTitleInput" required>
+                <label for="deckDescInput" data-lang-key="deck-desc-label">Description:</label>
+                <input type="text" id="deckDescInput">
+                <label for="deckTypeInput" data-lang-key="deck-type-label">Deck Type:</label>
+                <select id="deckTypeInput" required>
+                    <option value="terms" data-lang-key="deck-type-terms">Terms Only</option>
+                    <option value="problems" data-lang-key="deck-type-problems">Problems Only</option>
+                    <option value="combined" data-lang-key="deck-type-combined">"Terms and Problems</option>
+                </select>
+                <div class="add-card-section" id="termsSection">
+                    <h3 data-lang-key="add-cards-terms-header">Add Terms</h3>
+                    <div id="termsInputContainer"></div>
+                    <button type="button" id="addAnotherTermBtn" class="button-outline" data-lang-key="add-another-card">Add Another Term</button>
+                </div>
+                <div class="add-card-section" id="problemsSection" style="display: none;">
+                    <h3 data-lang-key="add-cards-problems-header">Add Problems</h3>
+                    <div id="problemsInputContainer"></div>
+                    <button type="button" id="addAnotherProblemBtn" class="button-outline" data-lang-key="add-another-problem">Add Another Problem</button>
+                </div>
+                <button type="submit" class="button-style" data-lang-key="save-deck">Save Deck</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="achievementsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-lang-key="achievements-modal-title">Achievements</h2>
+            </div>
+            <ul id="achievementsList">
+                <li class="no-achievements" data-lang-key="no-achievements-yet">You haven't earned any achievements yet.</li>
+            </ul>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <button id="resetAchievementsBtn" class="button-outline" data-lang-key="reset-achievements">Reset Achievements</button>
+            </div>
+        </div>
+    </div>
+    <div class="badge-earned" id="badgeNotification">
+        <div class="badge-icon">🏆</div>
+        <h3 data-lang-key="achievement-unlocked">Achievement Unlocked!</h3>
+        <p id="badgeDescription" data-lang-key="new-badge">You earned a new badge!</p>
+    </div>
+    <div class="modal" id="aboutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-lang-key="about-modal-title">About FlashLearn</h2>
+                </div>
+            <div id="aboutContent">
+                <p><a href="https://github.com/tasmulaevasan/flashlearn" target="_blank" rel="noopener noreferrer" data-lang-key="github-link" style="color: var(--primary-color); text-decoration: none;">View Project on GitHub</a></p>
+                <br>
+                <p data-lang-key="created-by" style="font-weight: bold;">Created by:</p>
+                <ul style="list-style: none; padding-left: 0; margin-top: 0.5rem;">
+                    <li>Тасмулаев Асан</li>
+                    <li>Каппаров Амир</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p data-lang-key="footer-text">© 2025 FlashLearn: Interactive Flashcard | Created for educational purposes</p>
+    </footer>
+
+    <script>
+        const languages = {
+            en: {
+                "html-title": "FlashLearn: Interactive Flashcards", "header-title": "FlashLearn: Interactive Flashcards", "header-subtitle": "Interactive Physics Learning",
+                "choose-deck": "📔 Choose Deck", "create-deck": "✍️ Create Deck", "mode-flashcards": "Terms", "mode-flashcards-desc": "Learn concepts",
+                "mode-quiz": "Quiz", "mode-quiz-desc": "Test knowledge", "mode-problems": "Problems", "mode-problems-desc": "Solve problems",
+                "start-title": "Let's start!", "start-content": "Choose a deck to begin.", "ready-title": "Ready?", "ready-content": "Press 'Next'.",
+                "submit-answer": "Submit Answer", "previous": "Previous", "next": "Next", "problem-solution-label": "Solution:", "flip-card": "Flip Card", "shuffle": "Shuffle",
+                "original-order": "Original Order", "learning-progress": "Learning Progress", "cards-reviewed": "Reviewed", "correct-answers": "Correct",
+                "total-attempts": "Attempts", "accuracy-rate": "Accuracy", "current-streak": "Streak", "reset-stats": "⟲ Reset", "choose-deck-modal": "Choose a Deck",
+                "create-new-deck-modal": "Create New Deck", "deck-title-label": "Deck Title:", "deck-desc-label": "Description:", "deck-type-label": "Deck Type:",
+                "deck-type-terms": "Terms Only", "deck-type-problems": "Problems Only", "deck-type-combined": "Terms and Problems",
+                "add-cards-terms-header": "Add Terms", "add-another-card": "Add Another Term", "add-cards-problems-header": "Add Problems",
+                "add-another-problem": "Add Another Problem",
+                "card-front-title-label": "Term/Topic:", "card-front-content-label": "Prompt/Definition:", "card-back-formula-label": "Formula:", "card-back-units-label": "Units:", "card-back-vars-label": "Variables:", "card-back-content-label": "Explanation:",
+                "problem-title-label": "Problem Title:", "problem-content-label": "Problem:", "problem-answer-label": "Answer (Number):",
+                "save-deck": "Save Deck", "achievement-unlocked": "Achievement Unlocked!",
+                "new-badge": "You earned a new badge!", "streak-title": "Streak!", "streak-5-desc": "5 correct answers in a row!",
+                "streak-10-desc": "10 correct answers in a row! Amazing!", "deck-completed-title": "Deck Completed!",
+                "deck-completed-desc": "You've studied all cards in this deck.", "correct-feedback": "Correct! ✅",
+                "incorrect-feedback": "Incorrect ❌ The correct answer was:", "problem-input-label": "Enter answer (number):", "input-placeholder": "0",
+                "footer-text": "© 2025 FlashLearn: Interactive Flashcard | Created for educational purposes", "no-decks-available": "No decks available. Create one!",
+                "select-language": "Select Language", "toggle-theme": "Toggle theme", "confirm-delete": "Delete deck", "deck-title-required": "Deck title is required.",
+                "add-one-card-alert": "Add at least one valid term or problem.", "deck-created-success": "Deck", "created-successfully": "created successfully!",
+                "one-card-required-alert": "At least one card is required.", "term-header": "Term", "delete-term": "Delete Term", "problem-header": "Problem",
+                "delete-problem": "Delete Problem", "no-options": "No options available.",
+                "achievements": "🏆 Achievements", "achievements-modal-title": "Achievements", "no-achievements-yet": "You haven't earned any achievements yet.", "current-deck-label": "Current Deck:",
+                "perfection-quiz-title": "Perfection (Quiz)", "perfection-quiz-desc": "Answered all quiz questions correctly in one session!",
+                "perfection-problems-title": "Perfection (Problems)", "perfection-problems-desc": "Answered all problems correctly in one session!",
+                "play-music": "Play Music", "pause-music": "Pause Music", "volume": "Volume",
+                "about": "?", "about-modal-title": "About FlashLearn", "github-link": "View Project on GitHub", "created-by": "Developers:", "reset-achievements": "Reset Achievements",
+                "confirm-reset-achievements": "Are you sure you want to reset all achievements? This cannot be undone.", "achievements-reset-success": "Achievements have been reset.",
+                "deck-completed-title-base": "Deck Completed!",
+                "attempts-title": "Practice Makes Perfect!", "attempts-50-desc": "Completed 50 attempts!", "attempts-100-desc": "Completed 100 attempts! Keep going!", "attempts-250-desc": "Completed 250 attempts! Dedication!",
+                "streak-15-desc": "15 correct answers in a row! You're on fire!",
+                "streak-20-desc": "20 correct answers in a row! Incredible!",
+                "streak-25-desc": "25 correct answers in a row! Champion!",
+                "streak-30-desc": "30 correct answers in a row! Outstanding!",
+                "streak-35-desc": "35 correct answers in a row! Amazing streak!",
+                "streak-40-desc": "40 correct answers in a row! You're unstoppable!",
+                "streak-45-desc": "45 correct answers in a row! Elite level!",
+                "streak-50-desc": "50 correct answers in a row! FlashLearn legend!",
+                "attempts-10-desc": "Completed 10 attempts! Getting started!",
+                "attempts-150-desc": "Completed 150 attempts! You're serious!",
+                "attempts-200-desc": "Completed 200 attempts! Persistence pays off!"
+            },
+            kk: {
+              "html-title": "FlashLearn: Интерактивті флешкарталар",
+              "header-title": "FlashLearn: Интерактивті флешкарталар",
+              "header-subtitle": "Физиканы интерактивті түрде оқыту",
+              "choose-deck": "📔 Колоданы таңдау",
+              "create-deck": "✍️ Колода жасау",
+              "mode-flashcards": "Терминдер",
+              "mode-flashcards-desc": "Түсініктерді үйрену",
+              "mode-quiz": "Тест",
+              "mode-quiz-desc": "Білімді тексеру",
+              "mode-problems": "Есептер",
+              "mode-problems-desc": "Есептерді шығару",
+              "start-title": "Бастайық!",
+              "start-content": "Бастау үшін колоданы таңдаңыз.",
+              "ready-title": "Дайынсыз ба?",
+              "ready-content": "'Келесі' түймесін басыңыз.",
+              "submit-answer": "Жауапты жіберу",
+              "previous": "Алдыңғы",
+              "next": "Келесі",
+              "flip-card": "Аудару",
+              "shuffle": "Араластыру",
+              "learning-progress": "Оқу барысы",
+              "cards-reviewed": "Қаралған",
+              "correct-answers": "Дұрыс",
+              "total-attempts": "Талпыныстар",
+              "accuracy-rate": "Дәлдік",
+              "current-streak": "Серия",
+              "reset-stats": "⟲ Тастау",
+              "choose-deck-modal": "Колоданы таңдау",
+              "create-new-deck-modal": "Жаңа колода жасау",
+              "deck-title-label": "Колоданың атауы:",
+              "deck-desc-label": "Сипаттама:",
+              "deck-type-label": "Колода түрі:",
+              "deck-type-terms": "Тек терминдер",
+              "deck-type-problems": "Тек есептер",
+              "deck-type-combined": "Терминдер мен есептер",
+              "add-cards-terms-header": "Терминдер қосу",
+              "add-another-card": "Тағы термин қосу",
+              "add-cards-problems-header": "Есептер қосу",
+              "add-another-problem": "Тағы есеп қосу",
+              "save-deck": "Колоданы сақтау",
+              "achievement-unlocked": "Жетістік ашылды!",
+              "new-badge": "Сіз жаңа төсбелгіге ие болдыңыз!",
+              "correct-feedback": "Дұрыс! ✅",
+              "incorrect-feedback": "Қате ❌ Дұрыс жауап:",
+              "problem-input-label": "Жауапты енгізіңіз (сан):",
+              "input-placeholder": "0",
+              "footer-text": "© 2025 FlashLearn: Интерактивті флешкарталар | Білім беру мақсатында жасалған",
+              "no-decks-available": "Қол жетімді колодалар жоқ. Біреуін жасаңыз!",
+              "select-language": "Тілді таңдау",
+              "toggle-theme": "Тақырыпты ауыстыру",
+              "achievements": "🏆 Жетістіктер",
+              "achievements-modal-title": "Жетістіктер",
+              "no-achievements-yet": "Сізде әзірге жетістіктер жоқ.",
+              "current-deck-label": "Ағымдағы колода:",
+              "about": "?",
+              "about-modal-title": "FlashLearn туралы",
+              "github-link": "GitHub-та жобаны көру",
+              "created-by": "Құрастырушылар:",
+              "reset-achievements": "Жетістіктерді тастау"
+            },
+            ru: {
+                "html-title": "FlashLearn: Интерактивные карточки", "header-title": "FlashLearn: Интерактивные карточки", "header-subtitle": "Интерактивное изучение физики",
+                "choose-deck": "📔 Выбрать колоду", "create-deck": "✍️ Создать колоду", "mode-flashcards": "Термины", "mode-flashcards-desc": "Изучение понятий",
+                "mode-quiz": "Тест", "mode-quiz-desc": "Проверка знаний", "mode-problems": "Задачи", "mode-problems-desc": "Решение задач",
+                "start-title": "Начнем!", "start-content": "Выберите колоду для изучения.", "ready-title": "Готовы?", "ready-content": "Нажмите 'Далее'.",
+                "submit-answer": "Отправить ответ", "previous": "Назад", "next": "Далее", "flip-card": "Перевернуть", "shuffle": "Перемешать",
+                "original-order": "По порядку", "learning-progress": "Прогресс обучения", "problem-solution-label": "Решение:", "cards-reviewed": "Просмотрено", "correct-answers": "Правильно",
+                "total-attempts": "Попыток", "accuracy-rate": "Точность", "current-streak": "Серия", "reset-stats": "⟲ Сбросить", "choose-deck-modal": "Выберите колоду",
+                "create-new-deck-modal": "Создать новую колоду", "deck-title-label": "Название колоды:", "deck-desc-label": "Описание:", "deck-type-label": "Тип колоды:",
+                "deck-type-terms": "Только термины", "deck-type-problems": "Только задачи", "deck-type-combined": "Термины и задачи",
+                "add-cards-terms-header": "Добавить Термины", "add-another-card": "Добавить еще термин", "add-cards-problems-header": "Добавить Задачи",
+                "add-another-problem": "Добавить еще задачу",
+                "card-front-title-label": "Тема/Термин:", "card-front-content-label": "Вопрос/Описание:", "card-back-formula-label": "Формула:", "card-back-units-label": "Ед. изм.:", "card-back-vars-label": "Обозначения:", "card-back-content-label": "Объяснение:",
+                "problem-title-label": "Название задачи:", "problem-content-label": "Задача:", "problem-answer-label": "Ответ (число):",
+                "save-deck": "Сохранить колоду", "achievement-unlocked": "Достижение!",
+                "new-badge": "Вы получили значок!", "streak-title": "Серия!", "streak-5-desc": "5 правильных ответов подряд!",
+                "streak-10-desc": "10 правильных ответов подряд! Отлично!", "deck-completed-title": "Колода изучена!",
+                "deck-completed-desc": "Вы прошли все карточки в этой колоде.", "correct-feedback": "Правильно! ✅",
+                "incorrect-feedback": "Неправильно ❌ Правильный ответ:", "problem-input-label": "Введите ответ (число):", "input-placeholder": "0",
+                "footer-text": "© 2025 FlashLearn: Интерактивные карточки | Создано в образовательных целях", "no-decks-available": "Нет доступных колод. Создайте свою!",
+                "select-language": "Выбрать язык", "toggle-theme": "Переключить тему", "confirm-delete": "Удалить колоду", "deck-title-required": "Название колоды обязательно.",
+                "add-one-card-alert": "Добавьте хотя бы один валидный термин или задачу.", "deck-created-success": "Колода", "created-successfully": "успешно создана!",
+                "one-card-required-alert": "Должна быть хотя бы одна карточка.", "term-header": "Термин", "delete-term": "Удалить Термин", "problem-header": "Задача",
+                "delete-problem": "Удалить Задачу", "no-options": "Нет доступных вариантов.",
+                "achievements": "🏆 Достижения", "achievements-modal-title": "Достижения", "no-achievements-yet": "Вы пока не получили достижений.", "current-deck-label": "Текущая колода:",
+                "perfection-quiz-title": "Безупречность (Тест)", "perfection-quiz-desc": "Все ответы в тесте верны за одну сессию!",
+                "perfection-problems-title": "Безупречность (Задачи)", "perfection-problems-desc": "Все задачи решены верно за одну сессию!",
+                "play-music": "Вкл. музыку", "pause-music": "Выкл. музыку", "volume": "Громкость",
+                "about": "?", "about-modal-title": "О FlashLearn", "github-link": "Посмотреть проект на GitHub", "created-by": "Разработчики:", "reset-achievements": "Сбросить Достижения",
+                "confirm-reset-achievements": "Вы уверены, что хотите сбросить все достижения? Это действие необратимо.", "achievements-reset-success": "Достижения сброшены.",
+                "deck-completed-title-base": "Колода Изучена!",
+                "attempts-title": "Практика - Путь к Мастерству!", "attempts-50-desc": "Совершено 50 попыток!", "attempts-100-desc": "Совершено 100 попыток! Продолжайте!", "attempts-250-desc": "Совершено 250 попыток! Упорство!",
+                "streak-15-desc": "15 правильных ответов подряд! Вы на волне!",
+                "streak-20-desc": "20 правильных ответов подряд! Потрясающе!",
+                "streak-25-desc": "25 правильных ответов подряд! Чемпион!",
+                "streak-30-desc": "30 правильных ответов подряд! Превосходно!",
+                "streak-35-desc": "35 правильных ответов подряд! Невероятная серия!",
+                "streak-40-desc": "40 правильных ответов подряд! Вас не остановить!",
+                "streak-45-desc": "45 правильных ответов подряд! Уровень элиты!",
+                "streak-50-desc": "50 правильных ответов подряд! Легенда FlashLearn!",
+                "attempts-10-desc": "Совершено 10 попыток! Хорошее начало!",
+                "attempts-150-desc": "Совершено 150 попыток! Вы настроены серьезно!",
+                "attempts-200-desc": "Совершено 200 попыток! Настойчивость приносит плоды!",
+            },
+            es: {
+                "html-title": "FlashLearn: Tarjetas interactivas", "header-title": "FlashLearn: Tarjetas interactivas", "header-subtitle": "Aprendizaje Interactivo de Física",
+                "choose-deck": "📔 Elegir Mazo", "create-deck": "✍️ Crear Mazo", "mode-flashcards": "Términos", "mode-flashcards-desc": "Aprender conceptos",
+                "mode-quiz": "Prueba", "mode-quiz-desc": "Evaluar conocimiento", "mode-problems": "Problemas", "mode-problems-desc": "Resolver problemas",
+                "start-title": "¡Empecemos!", "start-content": "Elige un mazo para empezar.", "ready-title": "¿Listo?", "ready-content": "Pulsa 'Siguiente'.",
+                "submit-answer": "Enviar Respuesta", "previous": "Anterior", "next": "Siguiente", "flip-card": "Voltear Tarjeta", "shuffle": "Mezclar",
+                "original-order": "Orden Original", "learning-progress": "Progreso de Aprendizaje", "cards-reviewed": "Revisadas", "correct-answers": "Correctas",
+                "total-attempts": "Intentos", "accuracy-rate": "Precisión", "current-streak": "Racha", "reset-stats": "⟲ Reiniciar", "choose-deck-modal": "Elige un Mazo",
+                "create-new-deck-modal": "Crear Nuevo Mazo", "deck-title-label": "Título del Mazo:", "deck-desc-label": "Descripción:", "deck-type-label": "Tipo de Mazo:",
+                "deck-type-terms": "Solo Términos", "deck-type-problems": "Solo Problemas", "deck-type-combined": "Términos y Problemas",
+                "add-cards-terms-header": "Añadir Términos", "add-another-card": "Añadir Otro Término", "add-cards-problems-header": "Añadir Problemas",
+                "add-another-problem": "Añadir Otro Problema",
+                 "card-front-title-label": "Tema/Término:", "card-front-content-label": "Pregunta/Descripción:", "card-back-formula-label": "Fórmula:", "card-back-units-label": "Unidades:", "card-back-vars-label": "Variables:", "card-back-content-label": "Explicación:",
+                 "problem-title-label": "Título del Problema:", "problem-content-label": "Problema:", "problem-answer-label": "Respuesta (Número):",
+                 "save-deck": "Guardar Mazo", "achievement-unlocked": "¡Logro Desbloqueado!",
+                "new-badge": "¡Has ganado una nueva insignia!", "streak-title": "¡Racha!", "streak-5-desc": "¡5 respuestas correctas seguidas!",
+                "streak-10-desc": "¡10 respuestas correctas seguidas! ¡Increíble!", "deck-completed-title": "¡Mazo Completado!",
+                "deck-completed-desc": "Has estudiado todas las tarjetas de este mazo.", "correct-feedback": "¡Correcto! ✅",
+                "incorrect-feedback": "Incorrecto ❌ La respuesta correcta era:", "problem-input-label": "Introduce la respuesta (número):", "input-placeholder": "0",
+                "footer-text": "© 2025 FlashLearn: Tarjetas interactivas | Creado con fines educativos", "no-decks-available": "No hay mazos disponibles. ¡Crea uno!",
+                "select-language": "Seleccionar idioma", "toggle-theme": "Alternar tema", "confirm-delete": "Eliminar mazo", "deck-title-required": "El título del mazo es obligatorio.",
+                "add-one-card-alert": "Añade al menos un término o problema válido.", "deck-created-success": "Mazo", "created-successfully": "creado con éxito!",
+                "one-card-required-alert": "Se requiere al menos una tarjeta.", "term-header": "Término", "delete-term": "Eliminar Término", "problem-header": "Problema",
+                "delete-problem": "Eliminar Problema", "no-options": "No hay opciones disponibles.",
+                 "achievements": "🏆 Logros", "achievements-modal-title": "Logros", "no-achievements-yet": "Aún no has conseguido ningún logro.", "current-deck-label": "Mazo actual:",
+                "perfection-quiz-title": "Perfección (Prueba)", "perfection-quiz-desc": "¡Respondiste correctamente todas las preguntas de la prueba en una sesión!",
+                "perfection-problems-title": "Perfección (Problemas)", "perfection-problems-desc": "¡Resolviste correctamente todos los problemas en una sesión!",
+                "play-music": "Reproducir Música", "pause-music": "Pausar Música", "volume": "Volumen",
+                "about": "?", "about-modal-title": "Acerca de FlashLearn", "github-link": "Ver Proyecto en GitHub", "created-by": "Creado por:", "reset-achievements": "Reiniciar Logros",
+                "confirm-reset-achievements": "¿Estás seguro de que quieres reiniciar todos los logros? Esta acción no se puede deshacer.", "achievements-reset-success": "Los logros han sido reiniciados.",
+                "deck-completed-title-base": "¡Mazo Completado!",
+                "attempts-title": "¡La Práctica Hace al Maestro!", "attempts-50-desc": "¡Completados 50 intentos!", "attempts-100-desc": "¡Completados 100 intentos! ¡Sigue así!", "attempts-250-desc": "¡Completados 250 intentos! ¡Dedicación!",
+                "streak-15-desc": "¡15 respuestas correctas seguidas! ¡Estás en llamas!",
+                "streak-20-desc": "¡20 respuestas correctas seguidas! ¡Increíble!",
+                "streak-25-desc": "¡25 respuestas correctas seguidas! ¡Campeón!",
+                "streak-30-desc": "¡30 respuestas correctas seguidas! ¡Excepcional!",
+                "streak-35-desc": "¡35 respuestas correctas seguidas! ¡Racha impresionante!",
+                "streak-40-desc": "¡40 respuestas correctas seguidas! ¡Imparable!",
+                "streak-45-desc": "¡45 respuestas correctas seguidas! ¡Nivel élite!",
+                "streak-50-desc": "¡50 respuestas correctas seguidas! ¡Leyenda de FlashLearn!",
+                "attempts-10-desc": "¡10 intentos completados! ¡Buen comienzo!",
+                "attempts-150-desc": "¡150 intentos completados! ¡Vas en serio!",
+                "attempts-200-desc": "¡200 intentos completados! ¡La persistencia da frutos!", "problem-solution-label": "Solución:"
+            }
+        };
+
+        const predefinedDecksMultiLang = {
+            'physics-combined-ru': {
+                ru: {
+                    title: 'Физика: Основы',
+                    description: 'Изучите термины и решите задачи',
+                    deckType: 'combined',
+                    termsCards: [
+                        { front: { title: "Первый закон Ньютона", content: "Сформулируйте закон инерции."}, back: { title: "Закон Инерции", formula:"$\\vec{F} = 0 \\implies \\vec{v} = const$", units:"$\\vec{v}$ = 1 $\\frac{м}{с}$", vars:"$\\vec{F}$ - равнодействующая сила, $\\vec{v}$ - скорость", content: "Существуют такие системы отсчета (инерциальные), относительно которых тело сохраняет свою скорость постоянной, если на него не действуют другие тела или действие этих тел скомпенсировано."}},
+                        { front: { title: "Второй закон Ньютона", content: "Основной закон динамики."}, back: { title: "F = ma", formula:"$\\vec{F} = m\\vec{a}$", units:"$\\vec{F}$ = 1 Н, $m$ = 1 кг, $\\vec{a}$ = 1 $\\frac{м}{с²}$", vars:"$\\vec{F}$ - равнодействующая сила, $m$ - масса, $\\vec{a}$ - ускорение", content: "Ускорение тела прямо пропорционально равнодействующей сил, приложенных к телу, и обратно пропорционально его массе."}},
+                        { front: { title: "Третий закон Ньютона", content: "Закон взаимодействия тел."}, back: { title: "Действие = Противодействие", formula:"$\\vec{F}_{1} = -\\vec{F}_{2}$", units:"$\\vec{F}$ = 1 H", vars:"$\\vec{F}_{1}$ - сила, действующая на тело 1 со стороны тела 2", content: "Силы, с которыми два тела действуют друг на друга, равны по модулю и противоположны по направлению."}},
+                        { front: { title: "Закон всемирного тяготения", content: "Как взаимодействуют массы?"}, back: { title: "Гравитация", formula:"$F = G \\frac{m_1 m_2}{R^2}$", units:"$F$ = 1 H, $m$ = 1 кг, $R$ = 1 м", vars:"$G$ - гравитационная постоянная ($≈ 6.67 \\times 10^{-11}$ Н·м²/кг²), $m_1, m_2$ - массы тел, $R$ - расстояние", content: "Два любых тела притягиваются друг к другу с силой, прямо пропорциональной произведению их масс и обратно пропорциональной квадрату расстояния между ними."}},
+                        { front: { title: "Вес тела", content: "Сила давления на опору." }, back: { title: "P = mg (в покое)", formula: "$\\vec{P} = m(\\vec{g} - \\vec{a})$", units: "$P$ = 1 Н, $m$ = 1 кг, $\\vec{g}$ = 10 $\\frac{м}{с²}$", vars: "$m$ - масса, $\\vec{g}$ - ускорение свободного падения, $\\vec{a}$ - ускорение опоры/подвеса", content: "Сила, с которой тело вследствие притяжения к Земле действует на опору или подвес. Не путать с массой!"}},
+                        { front: { title: "Импульс тела", content: "Мера механического движения." }, back: { title: "Количество движения", formula: "$\\vec{p} = m\\vec{v}$", units: "$\\vec{p}$ = 1 $\\frac{кг·м}{с}$", vars: "$m$ - масса, $\\vec{v}$ - скорость", content: "Векторная физическая величина, равная произведению массы тела на его скорость."}},
+                        { front: { title: "Импульс силы", content: "Мера воздействия силы за время." }, back: { title: "Изменение импульса тела", formula: "$\\Delta \\vec{p} = \\vec{F} \\Delta t$", units: "$\\Delta \\vec{p}$ = 1 $\\frac{кг·м}{с}$, $\\vec{F}$ = 1 Н, $\\Delta t$ = 1 с", vars: "$\\vec{F}$ - сила, $\\Delta t$ - время действия силы", content: "Произведение силы на время ее действия, равное изменению импульса тела." }},
+                        { front: { title: "Закон сохранения импульса", content: "Что сохраняется в замкнутой системе?" }, back: { title: "Суммарный импульс", formula: "$\\sum \\vec{p}_{до} = \\sum \\vec{p}_{после}$", units: "$\\vec{p}$ = 1 $\\frac{кг·м}{с}$", vars: "$\\vec{p}$ - импульс тела", content: "В замкнутой системе тел векторная сумма импульсов всех тел системы остается постоянной при любых взаимодействиях тел этой системы между собой." }},
+                        { front: { title: "Кинетическая энергия", content: "Энергия движущегося тела." }, back: { title: "Энергия движения", formula: "$E_k = \\frac{mv^2}{2}$", units: "$E_k$ = 1 Дж, $m$ = 1 кг, $v$ = 1 $\\frac{м}{с}$", vars: "$m$ - масса, $v$ - скорость", content: "Энергия, которой обладает тело вследствие своего движения." }},
+                        { front: { title: "Потенциальная энергия", content: "Энергия положения в поле тяжести." }, back: { title: "Энергия взаимодействия", formula: "$E_p = mgh$", units: "$E_p$ = 1 Дж, $m$ = 1 кг, $g$ = 10 $\\frac{м}{с²}$, $h$ = 1 м", vars: "$m$ - масса, $g$ - ускорение свободного падения, $h$ - высота", content: "Энергия, обусловленная взаимным расположением тел в поле тяготения Земли." }},
+                        { front: { title: "Закон сохранения энергии", content: "Фундаментальный закон природы." }, back: { title: "Полная механическая энергия", formula: "$E_k + E_p = const$", units: "$E_k$ = 1 Дж, $E_p$ = 1 Дж", vars: "$E_k$ - кинетическая энергия, $E_p$ - потенциальная энергия", content: "Полная механическая энергия замкнутой системы тел, в которой действуют только консервативные силы, остается постоянной." }},
+                        { front: { title: "Длина волны", content: "Расстояние между 'гребнями'." }, back: { title: "λ", formula: "$\\lambda = vT = \\frac{v}{f}$", units: "$\\lambda$ = 1 м, $v$ = 1 $\\frac{м}{с}$, $f$ = 1 Гц", vars: "$v$ - скорость волны, $T$ - период, $f$ - частота", content: "Расстояние между двумя ближайшими точками, колеблющимися в одинаковой фазе." }},
+                        { front: { title: "Частота колебаний", content: "Как часто происходят колебания?" }, back: { title: "f или ν", formula: "$f = \\frac{1}{T}$", units: "$f$ = 1 Гц, $T$ = 1 с", vars: "$T$ - период колебаний", content: "Число полных колебаний, совершаемых за единицу времени." }},
+                        { front: { title: "Скорость света в вакууме", content: "Предельная скорость." }, back: { title: "c", formula: "$c \\approx 3 \\times 10^8$", units: "$c$ = $3 \\times 10^8$ $\\frac{м}{с}$", vars: "$c$ - скорость света в вакууме", content: "Фундаментальная физическая постоянная, максимальная скорость распространения взаимодействий." }},
+                        { front: { title: "Мощность", content: "Скорость совершения работы." }, back: { title: "N или P", formula: "$N = \\frac{A}{t} = Fv \\cos(\\alpha)$", units: "$N$ = 1 Вт, $A$ = 1 Дж, $t$ = 1 с, $F$ = 1 Н, $v$ = 1 $\\frac{м}{с}$", vars: "$A$ - работа, $t$ - время, $F$ - сила, $v$ - скорость", content: "Физическая величина, равная отношению работы, совершаемой за некоторый промежуток времени, к этому времени." }},
+                        { front: { title: "Работа силы", content: "Мера действия силы по перемещению." }, back: { title: "A", formula: "$A = Fs \\cos(\\alpha)$", units: "$A$ = 1 Дж, $F$ = 1 Н, $s$ = 1 м", vars: "$F$ - сила, $s$ - перемещение, $\\alpha$ - угол между вектором силы и перемещения", content: "Изменение энергии системы в результате действия на нее силы." }},
+                        { front: { title: "Уравнение теплового баланса", content: "Теплообмен в изолированной системе." }, back: { title: "Q_отд + Q_пол = 0", formula: "$\\sum Q_i = 0$", units: "$Q$ = 1 Дж", vars: "$Q$ - количество теплоты, переданное телом", content: "В изолированной системе сумма переданных и полученных количеств теплоты равна нулю." }},
+                        { front: { title: "Закон Ома", content: "Связь тока, напряжения и сопротивления." }, back: { title: "I = U / R", formula: "$I = \\frac{U}{R}$", units: "$I$ = 1 А, $U$ = 1 В, $R$ = 1 Ом", vars: "$I$ - сила тока, $U$ - напряжение, $R$ - сопротивление", content: "Сила тока прямо пропорциональна напряжению и обратно пропорциональна сопротивлению." }},
+                        { front: { title: "Закон Кулона", content: "Взаимодействие точечных зарядов." }, back: { title: "Сила взаимодействия зарядов", formula: "$F = k \\frac{|q_1 q_2|}{r^2}$", units: "$F$ = 1 Н, $q_1, q_2$ = 1 Кл, $r$ = 1 м", vars: "$k$ - коэффициент ($≈ 9 \\times 10^9$ Н·м²/Кл²), $q_1, q_2$ - заряды, $r$ - расстояние между ними", content: "Сила взаимодействия между зарядами обратно пропорциональна квадрату расстояния и прямо пропорциональна произведению зарядов." }},
+                        { front: { title: "Электрический ток", content: "Упорядоченное движение зарядов." }, back: { title: "Сила тока", formula: "$I = \\frac{\\Delta q}{\\Delta t}$", units: "$I$ = 1 А, $\\Delta q$ = 1 Кл, $\\Delta t$ = 1 с", vars: "$\\Delta q$ - заряд, прошедший через проводник, $\\Delta t$ - время", content: "Сила тока равна заряду, прошедшему через поперечное сечение проводника, делённому на время." }}
+                    ],
+                    problemsCards: [
+                        { front: { title: "Задача: Скорость", content: "Автомобиль проехал 180 км за 2 часа. Какова его средняя скорость в км/ч?" }, back: { content: "90", solution: "Средняя скорость определяется формулой:\n\n\\[ v_{ср} = \\frac{S}{t} = \\frac{180}{2} = 90\\ \\frac{км}{ч} \\]" } },
+                        { front: { title: "Задача: Ускорение", content: "Поезд начал торможение при скорости 72 км/ч и остановился через 20 с. Найти модуль ускорения (в м/с²)." }, back: { content: "1", solution: "Переведем скорость в м/с:\n\n\\[ v_0 = 72\\ \\frac{км}{ч} = \\frac{72 \\cdot 1000}{3600} = 20\\ \\frac{м}{с} \\]\n\nТогда ускорение:\n\n\\[ a = \\frac{v - v_0}{t} = \\frac{0 - 20}{20} = -1\\ \\frac{м}{с^2} \\]\n\nМодуль ускорения:\n\n\\[ |a| = 1\\ \\frac{м}{с^2} \\]" } },
+                        { front: { title: "Задача: Перемещение", content: "Тело движется с начальной скоростью 5 м/с и ускорением 2 м/с². Какое расстояние оно пройдет за 4 секунды (в м)?" }, back: { content: "36", solution: "Формула перемещения при равноускоренном движении:\n\n\\[ S = v_0 t + \\frac{a t^2}{2} \\]\n\nПодставим значения:\n\n\\[ S = 5 \\cdot 4 + \\frac{2 \\cdot 4^2}{2} = 20 + \\frac{32}{2} = 20 + 16 = 36\\ \\text{м} \\]" } },
+                        { front: { title: "Задача: 2 закон Ньютона", content: "Тело массой 5 кг движется с ускорением 3 м/с². Какая сила действует на тело (в Н)?" }, back: { content: "15", solution: "Сила рассчитывается по второму закону Ньютона:\n\n\\[ F = ma = 5\\ \\text{кг} \\cdot 3\\ \\frac{м}{с^2} = 15\\ \\text{Н} \\]" } },
+                        { front: { title: "Задача: Сила тяжести", content: "Какова сила тяжести, действующая на тело массой 15 кг (g=10 м/с²) (в Н)?" }, back: { content: "150", solution: "Сила тяжести:\n\n\\[ F_g = mg = 15\\ \\text{кг} \\cdot 10\\ \\frac{м}{с^2} = 150\\ \\text{Н} \\]" } },
+                        { front: { title: "Задача: Вес", content: "Каков вес тела массой 8 кг, покоящегося на горизонтальной поверхности (g=10 м/с²) (в Н)?" }, back: { content: "80", solution: "В состоянии покоя на горизонтальной опоре вес $P$ равен силе тяжести\n\n\\[ F_g = mg = 8 \\cdot 10 = 80\\ \\text{Н} \\]" } },
+                        { front: { title: "Задача: Всемирное тяготение", content: "Масса Луны примерно в 81 раз меньше массы Земли, а радиус Луны примерно в 3.7 раза меньше радиуса Земли. Во сколько раз ускорение свободного падения на Луне меньше, чем на Земле?" }, back: { content: "6", solution: "Ускорение свободного падения рассчитывается по формуле:\n\n\\[ g = \\frac{GM}{R^2} \\]\n\nТогда отношение ускорений на Луне и Земле:\n\n\\[ \\frac{g_{\\text{Л}}}{g_{\\text{З}}} = \\frac{M_{\\text{Л}}}{M_{\\text{З}}} : \\left( \\frac{R_{\\text{Л}}}{R_{\\text{З}}} \\right)^2 = \\frac{1}{81} : \\left( \\frac{1}{3.7} \\right)^2 = \\frac{13.69}{81} \\approx \\frac{1}{6} \\]\n\nУскорение на Луне меньше примерно в 6 раз." } },
+                        { front: { title: "Задача: Импульс тела", content: "Тело массой 0.5 кг движется со скоростью 8 м/с. Чему равен импульс тела (в кг·м/с)?" }, back: { content: "4", solution: "Импульс тела рассчитывается по формуле:\n\n\\[ p = mv = 0.5\\ \\text{кг} \\cdot 8\\ \\frac{м}{с} = 4\\ \\text{кг·м/с} \\]" } },
+                        { front: { title: "Задача: Импульс силы", content: "Сила 10 Н действовала на тело 3 с. На сколько изменился импульс тела (в кг·м/с)?" }, back: { content: "30", solution: "Изменение импульса тела равно импульсу силы:\n\n\\[ \\Delta p = F \\Delta t = 10\\ \\text{Н} \\cdot 3\\ \\text{с} = 30\\ \\text{Н·с} = 30\\ \\text{кг·м/с} \\]" } },
+                        { front: { title: "Задача: Закон сохранения импульса", content: "Два пластилиновых шара массами 6 кг и 4 кг летят навстречу друг другу со скоростями 3 м/с и 2 м/с соответственно. Каков модуль их скорости после абсолютно неупругого удара (в м/с)?" }, back: { content: "1", solution: "Ось X направим вправо. Пусть шар массой 6 кг движется вправо со скоростью 3 м/с, а шар массой 4 кг — влево со скоростью 2 м/с.\n\nИмпульс первого шара:\n\n\\[ p_1 = m_1 v_1 = 6 \\cdot 3 = 18\\ \\text{кг·м/с} \\]\n\nИмпульс второго шара:\n\n\\[ p_2 = m_2 v_2 = 4 \\cdot (-2) = -8\\ \\text{кг·м/с} \\]\n\nСуммарный импульс до удара:\n\n\\[ p_{\\text{до}} = 18 - 8 = 10\\ \\text{кг·м/с} \\]\n\nПосле абсолютно неупругого удара шары слипаются, и их общая масса $m = 6 + 4 = 10$ кг. Пусть общая скорость после удара — $v$.\n\nПо закону сохранения импульса:\n\n\\[ p_{\\text{до}} = p_{\\text{после}} \\Rightarrow 10 = 10v \\Rightarrow v = 1\\ \\frac{м}{с} \\]" } },
+                        { front: { title: "Задача: Работа", content: "Сила 20 Н переместила тело на 5 м в направлении силы. Какая работа совершена (в Дж)?" }, back: { content: "100", solution: "$A = F s \\cos(0^\circ) = 20\\ \\text{Н} \\cdot 5\\ \\text{м} \\cdot 1 = 100\\ \\text{Дж}$" } },
+                        { front: { title: "Задача: Кинетическая энергия", content: "Тело массой 4 кг движется со скоростью 10 м/с. Какова его кинетическая энергия (в Дж)?" }, back: { content: "200", solution: "Кинетическая энергия тела рассчитывается по формуле:\n\n\\[ E_k = \\frac{mv^2}{2} = \\frac{4 \\cdot 10^2}{2} = 200\\ \\text{Дж} \\]" } },
+                        { front: { title: "Задача: Потенциальная энергия", content: "Тело массой 2 кг поднято на высоту 5 м. Какова его потенциальная энергия (g=10 м/с²) (в Дж)?" }, back: { content: "100", solution: "Потенциальная энергия рассчитывается по формуле:\n\n\\[ E_p = mgh = 2 \\cdot 10 \\cdot 5 = 100\\ \\text{Дж} \\]" } },
+                        { front: { title: "Задача: Закон Ома", content: "Напряжение на резисторе 12 В, сопротивление 3 Ом. Какова сила тока (в А)?" }, back: { content: "4", solution: "Сила тока рассчитывается по закону Ома:\n\n\\[ I = \\frac{U}{R} = \\frac{12}{3} = 4\\ \\text{А} \\]" } },
+                        { front: { title: "Задача: Мощность тока", content: "Сила тока в лампе 0.5 А, напряжение 220 В. Какова мощность лампы (в Вт)?" }, back: { content: "110", solution: "Мощность рассчитывается по формуле:\n\n\\[ P = UI = 220 \\cdot 0.5 = 110\\ \\text{Вт} \\]" } },
+                        { front: { title: "Задача: Закон Кулона", content: "Во сколько раз изменится сила взаимодействия двух зарядов, если расстояние между ними уменьшить в 2 раза?" }, back: { content: "4", solution: "Сила взаимодействия между зарядами пропорциональна квадрату расстояния между ними:\n\n\\[ F \\sim \\frac{1}{r^2} \\]\n\nЕсли $r$ уменьшить в 2 раза, то $r^2$ уменьшится в 4 раза. Сила увеличится в 4 раза." } },
+                        { front: { title: "Задача: Количество теплоты", content: "Удельная теплоемкость воды 4200 Дж/(кг·°C). Сколько теплоты (в кДж) нужно, чтобы нагреть 0.5 кг воды на 20 °C?" }, back: { content: "42", solution: "Теплота рассчитывается по формуле:\n\n\\[ Q = cm\\Delta T = 4200 \\cdot 0.5 \\cdot 20 = 42000\\ \\text{Дж} = 42\\ \\text{кДж} \\]" } },
+                        { front: { title: "Задача: Электрический заряд", content: "Через проводник за 1 минуту прошел заряд 120 Кл. Какова сила тока в проводнике (в А)?" }, back: { content: "2", solution: "Время $t = 1\\ \\text{мин} = 60\\ \\text{с}$. Сила тока:\n\n\\[ I = \\frac{\\Delta q}{\\Delta t} = \\frac{120}{60} = 2\\ \\text{А} \\]" } },
+                        { front: { title: "Задача: Частота", content: "Тело совершило 50 колебаний за 10 секунд. Какова частота колебаний (в Гц)?" }, back: { content: "5", solution: "Частота колебаний:\n\n\\[ f = \\frac{N}{t} = \\frac{50}{10} = 5\\ \\text{Гц} \\]" } },
+                        { front: { title: "Задача: Длина волны", content: "Скорость звука в воздухе 340 м/с. Какова длина волны звука частотой 170 Гц (в м)?" }, back: { content: "2", solution: "Длина волны звука:\n\n\\[ \\lambda = \\frac{v}{f} = \\frac{340}{170} = 2\\ \\text{м} \\]" } }    
+                    ]
+                },
+                en: {
+                    title: 'Physics: Basics',
+                    description: 'Learn terms and solve problems',
+                    deckType: 'combined',
+                    termsCards: [
+                        { front: { title: "Newton's First Law", content: "State the law of inertia."}, back: { title: "Law of Inertia", formula:"$\\vec{F} = 0 \\implies \\vec{v} = const$", units:"Velocity (m/s)", vars:"$\\vec{F}$ - net force, $\\vec{v}$ - velocity", content: "In an inertial frame of reference, an object either remains at rest or continues to move at a constant velocity, unless acted upon by a net force."}},
+                        { front: { title: "Newton's Second Law", content: "Fundamental law of dynamics."}, back: { title: "F = ma", formula:"$\\vec{F} = m\\vec{a}$", units:"Force (N), mass (kg), acceleration (m/s²)", vars:"$\\vec{F}$ - net force, m - mass, $\\vec{a}$ - acceleration", content: "The acceleration of an object is directly proportional to the net force acting on it and inversely proportional to its mass."}},
+                        { front: { title: "Newton's Third Law", content: "Law of interaction."}, back: { title: "Action = Reaction", formula:"$\\vec{F}_{1} = -\\vec{F}_{2}$", units:"Force (N)", vars:"$\\vec{F}_{1}$ - force exerted by body 2 on body 1", content: "For every action, there is an equal and opposite reaction. Forces come in pairs."}},
+                        { front: { title: "Law of Universal Gravitation", content: "How do masses interact?"}, back: { title: "Gravity", formula:"$F = G \\frac{m_1 m_2}{r^2}$", units:"Force (N), mass (kg), distance (m)", vars:"G - gravitational constant ($≈ 6.67 \\times 10^{-11}$ N·m²/kg²), $m_1, m_2$ - masses, r - distance", content: "Every particle attracts every other particle in the universe with a force proportional to the product of their masses and inversely proportional to the square of the distance between their centers."}},
+                        { front: { title: "Weight", content: "Force exerted on a support."}, back: { title: "W = mg (at rest)", formula:"$\\vec{W} = m(\\vec{g} - \\vec{a})$", units:"Weight (N), mass (kg), acceleration (m/s²)", vars:"m - mass, $\\vec{g}$ - acceleration due to gravity, $\\vec{a}$ - acceleration of support/suspension", content: "The force exerted on a support or suspension by an object due to gravity. Not to be confused with mass!"}},
+                        { front: { title: "Momentum", content: "Measure of motion."}, back: { title: "Quantity of motion", formula:"$\\vec{p} = m\\vec{v}$", units:"kg·m/s", vars:"m - mass, $\\vec{v}$ - velocity", content: "A vector quantity defined as the product of an object's mass and velocity."}},
+                        { front: { title: "Impulse", content: "Measure of force's effect over time."}, back: { title: "Change in momentum", formula:"$\\Delta \\vec{p} = \\vec{F} \\Delta t$", units:"N·s or kg·m/s", vars:"$\\vec{F}$ - force, $\\Delta t$ - time interval", content: "The product of the force and the time interval over which it acts, equal to the change in momentum of the object."}},
+                        { front: { title: "Conservation of Momentum", content: "What is conserved in a closed system?"}, back: { title: "Total momentum", formula:"$\\sum \\vec{p}_{initial} = \\sum \\vec{p}_{final}$", units:"kg·m/s", vars:"$\\vec{p}$ - momentum", content: "In a closed system, the total momentum remains constant, regardless of the interactions between the objects within the system."}},
+                        { front: { title: "Kinetic Energy", content: "Energy of a moving object."}, back: { title: "Energy of motion", formula:"$E_k = \\frac{mv^2}{2}$", units:"Joule (J)", vars:"m - mass (kg), v - speed (m/s)", content: "The energy possessed by an object due to its motion."}},
+                        { front: { title: "Potential Energy (Gravitational)", content: "Energy due to position in a gravitational field."}, back: { title: "Energy of interaction", formula:"$E_p = mgh$", units:"Joule (J)", vars:"m - mass (kg), g - acceleration due to gravity (m/s²), h - height (m)", content: "Energy stored by an object as the result of its vertical position or height."}},
+                        { front: { title: "Conservation of Energy", content: "Fundamental law of nature."}, back: { title: "Total mechanical energy", formula:"$E_k + E_p = const$ (for isolated conservative system)", units:"Joule (J)", vars:"$E_k$ - kinetic energy, $E_p$ - potential energy", content: "The total mechanical energy of an isolated system remains constant if only conservative forces are doing work."}},
+                        { front: { title: "Wavelength", content: "Distance between crests."}, back: { title: "λ", formula:"$\\lambda = vT = \\frac{v}{f}$", units:"meter (m)", vars:"v - wave speed (m/s), T - period (s), f - frequency (Hz)", content: "The spatial period of a periodic wave – the distance over which the wave's shape repeats."}},
+                        { front: { title: "Frequency", content: "How often do oscillations occur?"}, back: { title: "f or ν", formula:"$f = \\frac{1}{T}$", units:"Hertz (Hz)", vars:"T - period (s)", content: "The number of occurrences of a repeating event per unit of time."}},
+                        { front: { title: "Speed of Light in Vacuum", content: "The ultimate speed limit."}, back: { title: "c", formula:"$c \\approx 3 \\times 10^8$ m/s", units:"m/s", vars:"c - speed of light", content: "A fundamental physical constant, the maximum speed at which all conventional matter and hence all known forms of information in the universe can travel."}},
+                        { front: { title: "Power", content: "Rate of doing work."}, back: { title: "P", formula:"$P = \\frac{W}{t} = Fv \\cos(\\alpha)$", units:"Watt (W)", vars:"W - work (J), t - time (s), F - force (N), v - velocity (m/s)", content: "The rate at which work is performed or energy is converted."}},
+                        { front: { title: "Work (by a force)", content: "Measure of energy transfer by force."}, back: { title: "W", formula:"$W = Fs \\cos(\\alpha)$", units:"Joule (J)", vars:"F - force (N), s - displacement (m), α - angle between F and s", content: "The energy transferred when a force moves an object over a distance."}},
+                        { front: { title: "Heat Balance Equation", content: "Heat exchange in an isolated system."}, back: { title: "Q_lost + Q_gained = 0", formula:"$\\sum Q_i = 0$", units:"Joule (J)", vars:"Q - amount of heat transferred", content: "In an isolated system, the sum of heat lost by hotter objects equals the sum of heat gained by colder objects."}},
+                        { front: { title: "Ohm's Law", content: "Relation between current, voltage, resistance."}, back: { title: "I = V / R", formula:"$I = \\frac{V}{R}$", units:"Current (A), Voltage (V), Resistance (Ω)", vars:"I - current, V - voltage, R - resistance", content: "The current through a conductor is directly proportional to the voltage across it and inversely proportional to its resistance."}},
+                        { front: { title: "Coulomb's Law", content: "Interaction of point charges."}, back: { title: "Electrostatic Force", formula:"$F = k \\frac{|q_1 q_2|}{r^2}$", units:"Force (N), charge (C), distance (m)", vars:"k - Coulomb constant ($≈ 9 \\times 10^9$ N·m²/C²), $q_1, q_2$ - charges, r - distance", content: "The magnitude of the electrostatic force of attraction or repulsion between two point charges is directly proportional to the product of the magnitudes of charges and inversely proportional to the square of the distance between them."}},
+                        { front: { title: "Electric Current", content: "Ordered flow of charge."}, back: { title: "Current Intensity", formula:"$I = \\frac{\\Delta q}{\\Delta t}$", units:"Ampere (A)", vars:"$\\Delta q$ - charge (C) passing through a cross-section, $\\Delta t$ - time (s)", content: "A flow of electric charge. Current intensity is the rate at which charge flows past a point."}}
+                    ],
+                    problemsCards: [
+                        { front: { title: "Problem: Speed", content: "A car traveled 180 km in 2 hours. What is its average speed in km/h?" }, back: { content: "90", solution: "Average speed is calculated as:\n\n\\[ v_{avg} = \\frac{Distance}{Time} = \\frac{180\\ km}{2\\ h} = 90\\ km/h \\]" } },
+                        { front: { title: "Problem: Acceleration", content: "A train starts braking at 72 km/h and stops in 20 s. Find the magnitude of acceleration (in m/s²)." }, back: { content: "1", solution: "Convert speed to m/s:\n\n\\[ v_0 = 72\\ km/h = \\frac{72 \\times 1000}{3600} = 20\\ m/s \\]\n\nAcceleration:\n\n\\[ a = \\frac{v - v_0}{t} = \\frac{0 - 20}{20} = -1\\ m/s^2 \\]\n\nMagnitude:\n\n\\[ |a| = 1\\ m/s^2 \\]" } },
+                        { front: { title: "Problem: Displacement", content: "An object moves with an initial velocity of 5 m/s and acceleration of 2 m/s². What distance does it cover in 4 seconds (in m)?" }, back: { content: "36", solution: "Displacement formula for constant acceleration:\n\n\\[ S = v_0 t + \\frac{a t^2}{2} \\]\n\nSubstitute values:\n\n\\[ S = 5 \\cdot 4 + \\frac{2 \\cdot 4^2}{2} = 20 + \\frac{32}{2} = 20 + 16 = 36\\ m \\]" } },
+                        { front: { title: "Problem: Newton's 2nd Law", content: "A body of mass 5 kg moves with an acceleration of 3 m/s². What force acts on the body (in N)?" }, back: { content: "15", solution: "Force is calculated using Newton's second law:\n\n\\[ F = ma = 5\\ kg \\cdot 3\\ m/s^2 = 15\\ N \\]" } },
+                        { front: { title: "Problem: Gravity Force", content: "What is the force of gravity acting on a 15 kg body (g=10 m/s²) (in N)?" }, back: { content: "150", solution: "Force of gravity:\n\n\\[ F_g = mg = 15\\ kg \\cdot 10\\ m/s^2 = 150\\ N \\]" } },
+                        { front: { title: "Problem: Weight", content: "What is the weight of an 8 kg body resting on a horizontal surface (g=10 m/s²) (in N)?" }, back: { content: "80", solution: "At rest on a horizontal surface, weight $W$ equals the force of gravity:\n\n\\[ F_g = mg = 8 \\cdot 10 = 80\\ N \\]" } },
+                        { front: { title: "Problem: Universal Gravitation", content: "The Moon's mass is about 81 times less than Earth's mass, and the Moon's radius is about 3.7 times smaller than Earth's radius. How many times smaller is the acceleration due to gravity on the Moon compared to Earth?" }, back: { content: "6", solution: "Acceleration due to gravity:\n\n\\[ g = \\frac{GM}{R^2} \\]\n\nRatio of accelerations on Moon and Earth:\n\n\\[ \\frac{g_{M}}{g_{E}} = \\frac{M_{M}}{M_{E}} \\div \\left( \\frac{R_{M}}{R_{E}} \\right)^2 = \\frac{1}{81} \\div \\left( \\frac{1}{3.7} \\right)^2 \\approx \\frac{1}{81} \\div \\frac{1}{13.69} = \\frac{13.69}{81} \\approx \\frac{1}{6} \\]\n\nAcceleration on the Moon is about 6 times smaller." } },
+                        { front: { title: "Problem: Momentum", content: "A 0.5 kg body moves at a speed of 8 m/s. What is its momentum (in kg·m/s)?" }, back: { content: "4", solution: "Momentum is calculated as:\n\n\\[ p = mv = 0.5\\ kg \\cdot 8\\ m/s = 4\\ kg\\cdot m/s \\]" } },
+                        { front: { title: "Problem: Impulse", content: "A force of 10 N acted on a body for 3 s. By how much did the body's momentum change (in kg·m/s)?" }, back: { content: "30", solution: "Change in momentum equals the impulse of the force:\n\n\\[ \\Delta p = F \\Delta t = 10\\ N \\cdot 3\\ s = 30\\ N\\cdot s = 30\\ kg\\cdot m/s \\]" } },
+                        { front: { title: "Problem: Conservation of Momentum", content: "Two clay balls with masses 6 kg and 4 kg move towards each other at speeds of 3 m/s and 2 m/s, respectively. What is the magnitude of their velocity after a perfectly inelastic collision (in m/s)?" }, back: { content: "1", solution: "Let the X-axis point right. The 6 kg ball moves right (v1=3), the 4 kg ball moves left (v2=-2).\n\nInitial momentum:\n\n\\[ p_1 = m_1 v_1 = 6 \\cdot 3 = 18 \\]\n\\[ p_2 = m_2 v_2 = 4 \\cdot (-2) = -8 \\]\n\nTotal initial momentum:\n\n\\[ p_{initial} = 18 - 8 = 10\\ kg\\cdot m/s \\]\n\nAfter collision, total mass $m = 6 + 4 = 10$ kg. Let final velocity be $v$.\n\nConservation of momentum:\n\n\\[ p_{initial} = p_{final} \\Rightarrow 10 = 10v \\Rightarrow v = 1\\ m/s \\]" } },
+                        { front: { title: "Problem: Work", content: "A force of 20 N moved a body 5 m in the direction of the force. What work was done (in J)?" }, back: { content: "100", solution: "$W = F s \\cos(0^\circ) = 20\\ N \\cdot 5\\ m \\cdot 1 = 100\\ J$" } },
+                        { front: { title: "Problem: Kinetic Energy", content: "A body of mass 4 kg moves at a speed of 10 m/s. What is its kinetic energy (in J)?" }, back: { content: "200", solution: "Kinetic energy is calculated as:\n\n\\[ E_k = \\frac{mv^2}{2} = \\frac{4 \\cdot 10^2}{2} = 200\\ J \\]" } },
+                        { front: { title: "Problem: Potential Energy", content: "A body of mass 2 kg is lifted to a height of 5 m. What is its potential energy (g=10 m/s²) (in J)?" }, back: { content: "100", solution: "Potential energy is calculated as:\n\n\\[ E_p = mgh = 2 \\cdot 10 \\cdot 5 = 100\\ J \\]" } },
+                        { front: { title: "Problem: Ohm's Law", content: "The voltage across a resistor is 12 V, its resistance is 3 Ω. What is the current (in A)?" }, back: { content: "4", solution: "Current is calculated using Ohm's law:\n\n\\[ I = \\frac{V}{R} = \\frac{12\\ V}{3\\ \\Omega} = 4\\ A \\]" } },
+                        { front: { title: "Problem: Electric Power", content: "The current in a lamp is 0.5 A, the voltage is 220 V. What is the power of the lamp (in W)?" }, back: { content: "110", solution: "Power is calculated as:\n\n\\[ P = VI = 220\\ V \\cdot 0.5\\ A = 110\\ W \\]" } },
+                        { front: { title: "Problem: Coulomb's Law", content: "How many times does the interaction force between two charges change if the distance between them is halved?" }, back: { content: "4", solution: "Interaction force is inversely proportional to the square of the distance:\n\n\\[ F \\sim \\frac{1}{r^2} \\]\n\nIf $r$ is halved, $r^2$ decreases by a factor of 4. The force increases by a factor of 4." } },
+                        { front: { title: "Problem: Heat Quantity", content: "Specific heat capacity of water is 4200 J/(kg·°C). How much heat (in kJ) is needed to heat 0.5 kg of water by 20 °C?" }, back: { content: "42", solution: "Heat is calculated as:\n\n\\[ Q = cm\\Delta T = 4200 \\cdot 0.5 \\cdot 20 = 42000\\ J = 42\\ kJ \\]" } },
+                        { front: { title: "Problem: Electric Charge", content: "A charge of 120 C passed through a conductor in 1 minute. What is the current in the conductor (in A)?" }, back: { content: "2", solution: "Time $t = 1\\ min = 60\\ s$. Current:\n\n\\[ I = \\frac{\\Delta q}{\\Delta t} = \\frac{120\\ C}{60\\ s} = 2\\ A \\]" } },
+                        { front: { title: "Problem: Frequency", content: "An object made 50 oscillations in 10 seconds. What is the frequency of oscillations (in Hz)?" }, back: { content: "5", solution: "Frequency:\n\n\\[ f = \\frac{N}{t} = \\frac{50}{10} = 5\\ Hz \\]" } },
+                        { front: { title: "Problem: Wavelength", content: "The speed of sound in air is 340 m/s. What is the wavelength of sound with a frequency of 170 Hz (in m)?" }, back: { content: "2", solution: "Wavelength:\n\n\\[ \\lambda = \\frac{v}{f} = \\frac{340\\ m/s}{170\\ Hz} = 2\\ m \\]" } }
+                    ]
+                },
+                es: {
+                    title: 'Física: Fundamentos',
+                    description: 'Aprende términos y resuelve problemas',
+                    deckType: 'combined',
+                    termsCards: [
+                        { front: { title: "Primera Ley de Newton", content: "Enuncia la ley de inercia."}, back: { title: "Ley de Inercia", formula:"$\\vec{F} = 0 \\implies \\vec{v} = const$", units:"Velocidad (m/s)", vars:"$\\vec{F}$ - fuerza neta, $\\vec{v}$ - velocidad", content: "En un marco de referencia inercial, un objeto permanece en reposo o continúa moviéndose a velocidad constante, a menos que actúe sobre él una fuerza neta."}},
+                        { front: { title: "Segunda Ley de Newton", content: "Ley fundamental de la dinámica."}, back: { title: "F = ma", formula:"$\\vec{F} = m\\vec{a}$", units:"Fuerza (N), masa (kg), aceleración (m/s²)", vars:"$\\vec{F}$ - fuerza neta, m - masa, $\\vec{a}$ - aceleración", content: "La aceleración de un objeto es directamente proporcional a la fuerza neta que actúa sobre él e inversamente proporcional a su masa."}},
+                        { front: { title: "Tercera Ley de Newton", content: "Ley de interacción."}, back: { title: "Acción = Reacción", formula:"$\\vec{F}_{1} = -\\vec{F}_{2}$", units:"Fuerza (N)", vars:"$\\vec{F}_{1}$ - fuerza ejercida por el cuerpo 2 sobre el cuerpo 1", content: "A toda acción corresponde una reacción igual y opuesta. Las fuerzas siempre ocurren en pares."}},
+                        { front: { title: "Ley de Gravitación Universal", content: "¿Cómo interactúan las masas?"}, back: { title: "Gravedad", formula:"$F = G \\frac{m_1 m_2}{r^2}$", units:"Fuerza (N), masa (kg), distancia (m)", vars:"G - constante gravitacional ($≈ 6.67 \\times 10^{-11}$ N·m²/kg²), $m_1, m_2$ - masas, r - distancia", content: "Toda partícula en el universo atrae a toda otra partícula con una fuerza que es directamente proporcional al producto de sus masas e inversamente proporcional al cuadrado de la distancia entre sus centros."}},
+                        { front: { title: "Peso", content: "Fuerza ejercida sobre un soporte."}, back: { title: "P = mg (en reposo)", formula:"$\\vec{P} = m(\\vec{g} - \\vec{a})$", units:"Peso (N), masa (kg), aceleración (m/s²)", vars:"m - masa, $\\vec{g}$ - aceleración debida a la gravedad, $\\vec{a}$ - aceleración del soporte/suspensión", content: "La fuerza ejercida sobre un soporte o suspensión por un objeto debido a la gravedad. ¡No confundir con masa!"}},
+                        { front: { title: "Momento Lineal (Cantidad de Movimiento)", content: "Medida del movimiento."}, back: { title: "Cantidad de movimiento", formula:"$\\vec{p} = m\\vec{v}$", units:"kg·m/s", vars:"m - masa, $\\vec{v}$ - velocidad", content: "Una cantidad vectorial definida como el producto de la masa y la velocidad de un objeto."}},
+                        { front: { title: "Impulso", content: "Medida del efecto de una fuerza en el tiempo."}, back: { title: "Cambio en el momento", formula:"$\\Delta \\vec{p} = \\vec{F} \\Delta t$", units:"N·s o kg·m/s", vars:"$\\vec{F}$ - fuerza, $\\Delta t$ - intervalo de tiempo", content: "El producto de la fuerza y el intervalo de tiempo durante el cual actúa, igual al cambio en el momento lineal del objeto."}},
+                        { front: { title: "Conservación del Momento Lineal", content: "¿Qué se conserva en un sistema cerrado?"}, back: { title: "Momento total", formula:"$\\sum \\vec{p}_{inicial} = \\sum \\vec{p}_{final}$", units:"kg·m/s", vars:"$\\vec{p}$ - momento lineal", content: "En un sistema cerrado (aislado), el momento lineal total permanece constante, independientemente de las interacciones entre los objetos dentro del sistema."}},
+                        { front: { title: "Energía Cinética", content: "Energía de un objeto en movimiento."}, back: { title: "Energía de movimiento", formula:"$E_k = \\frac{mv^2}{2}$", units:"Julio (J)", vars:"m - masa (kg), v - rapidez (m/s)", content: "La energía que posee un objeto debido a su movimiento."}},
+                        { front: { title: "Energía Potencial (Gravitatoria)", content: "Energía debida a la posición en un campo gravitatorio."}, back: { title: "Energía de interacción", formula:"$E_p = mgh$", units:"Julio (J)", vars:"m - masa (kg), g - aceleración debida a la gravedad (m/s²), h - altura (m)", content: "Energía almacenada por un objeto como resultado de su posición vertical o altura."}},
+                        { front: { title: "Conservación de la Energía", content: "Ley fundamental de la naturaleza."}, back: { title: "Energía mecánica total", formula:"$E_k + E_p = const$ (para sistema conservativo aislado)", units:"Julio (J)", vars:"$E_k$ - energía cinética, $E_p$ - energía potencial", content: "La energía mecánica total de un sistema aislado permanece constante si solo las fuerzas conservativas realizan trabajo."}},
+                        { front: { title: "Longitud de Onda", content: "Distancia entre crestas."}, back: { title: "λ", formula:"$\\lambda = vT = \\frac{v}{f}$", units:"metro (m)", vars:"v - velocidad de la onda (m/s), T - período (s), f - frecuencia (Hz)", content: "El período espacial de una onda periódica – la distancia sobre la cual la forma de la onda se repite."}},
+                        { front: { title: "Frecuencia", content: "¿Con qué frecuencia ocurren las oscilaciones?"}, back: { title: "f o ν", formula:"$f = \\frac{1}{T}$", units:"Hertz (Hz)", vars:"T - período (s)", content: "El número de ocurrencias de un evento repetitivo por unidad de tiempo."}},
+                        { front: { title: "Velocidad de la Luz en el Vacío", content: "El límite de velocidad último."}, back: { title: "c", formula:"$c \\approx 3 \\times 10^8$ m/s", units:"m/s", vars:"c - velocidad de la luz", content: "Una constante física fundamental, la velocidad máxima a la que toda la materia convencional y, por lo tanto, todas las formas conocidas de información en el universo pueden viajar."}},
+                        { front: { title: "Potencia", content: "Ritmo de realización de trabajo."}, back: { title: "P", formula:"$P = \\frac{W}{t} = Fv \\cos(\\alpha)$", units:"Watt (W)", vars:"W - trabajo (J), t - tiempo (s), F - fuerza (N), v - velocidad (m/s)", content: "La tasa a la que se realiza el trabajo o se convierte la energía."}},
+                        { front: { title: "Trabajo (por una fuerza)", content: "Medida de transferencia de energía por fuerza."}, back: { title: "W", formula:"$W = Fs \\cos(\\alpha)$", units:"Julio (J)", vars:"F - fuerza (N), s - desplazamiento (m), α - ángulo entre F y s", content: "La energía transferida cuando una fuerza mueve un objeto a lo largo de una distancia."}},
+                        { front: { title: "Ecuación del Balance Térmico", content: "Intercambio de calor en un sistema aislado."}, back: { title: "Q_cedido + Q_ganado = 0", formula:"$\\sum Q_i = 0$", units:"Julio (J)", vars:"Q - cantidad de calor transferido", content: "En un sistema aislado, la suma del calor cedido por los objetos más calientes es igual a la suma del calor ganado por los objetos más fríos."}},
+                        { front: { title: "Ley de Ohm", content: "Relación entre corriente, voltaje, resistencia."}, back: { title: "I = V / R", formula:"$I = \\frac{V}{R}$", units:"Corriente (A), Voltaje (V), Resistencia (Ω)", vars:"I - corriente, V - voltaje, R - resistencia", content: "La corriente a través de un conductor es directamente proporcional al voltaje a través de él e inversamente proporcional a su resistencia."}},
+                        { front: { title: "Ley de Coulomb", content: "Interacción de cargas puntuales."}, back: { title: "Fuerza Electrostática", formula:"$F = k \\frac{|q_1 q_2|}{r^2}$", units:"Fuerza (N), carga (C), distancia (m)", vars:"k - constante de Coulomb ($≈ 9 \\times 10^9$ N·m²/C²), $q_1, q_2$ - cargas, r - distancia", content: "La magnitud de la fuerza electrostática de atracción o repulsión entre dos cargas puntuales es directamente proporcional al producto de las magnitudes de las cargas e inversamente proporcional al cuadrado de la distancia entre ellas."}},
+                        { front: { title: "Corriente Eléctrica", content: "Flujo ordenado de carga."}, back: { title: "Intensidad de Corriente", formula:"$I = \\frac{\\Delta q}{\\Delta t}$", units:"Amperio (A)", vars:"$\\Delta q$ - carga (C) que pasa por una sección transversal, $\\Delta t$ - tiempo (s)", content: "Un flujo de carga eléctrica. La intensidad de corriente es la tasa a la que la carga fluye por un punto."}}
+                    ],
+                    problemsCards: [
+                         { front: { title: "Problema: Velocidad", content: "Un coche viajó 180 km en 2 horas. ¿Cuál es su velocidad media en km/h?" }, back: { content: "90", solution: "Velocidad media se calcula como:\n\n\\[ v_{media} = \\frac{Distancia}{Tiempo} = \\frac{180\\ km}{2\\ h} = 90\\ km/h \\]" } },
+                         { front: { title: "Problema: Aceleración", content: "Un tren comienza a frenar a 72 km/h y se detiene en 20 s. Halla la magnitud de la aceleración (en m/s²)." }, back: { content: "1", solution: "Convertir velocidad a m/s:\n\n\\[ v_0 = 72\\ km/h = \\frac{72 \\times 1000}{3600} = 20\\ m/s \\]\n\nAceleración:\n\n\\[ a = \\frac{v - v_0}{t} = \\frac{0 - 20}{20} = -1\\ m/s^2 \\]\n\nMagnitud:\n\n\\[ |a| = 1\\ m/s^2 \\]" } },
+                         { front: { title: "Problema: Desplazamiento", content: "Un objeto se mueve con velocidad inicial de 5 m/s y aceleración de 2 m/s². ¿Qué distancia recorre en 4 segundos (en m)?" }, back: { content: "36", solution: "Fórmula del desplazamiento con aceleración constante:\n\n\\[ S = v_0 t + \\frac{a t^2}{2} \\]\n\nSustituir valores:\n\n\\[ S = 5 \\cdot 4 + \\frac{2 \\cdot 4^2}{2} = 20 + \\frac{32}{2} = 20 + 16 = 36\\ m \\]" } },
+                         { front: { title: "Problema: 2ª Ley de Newton", content: "Un cuerpo de masa 5 kg se mueve con una aceleración de 3 m/s². ¿Qué fuerza actúa sobre el cuerpo (en N)?" }, back: { content: "15", solution: "La fuerza se calcula usando la segunda ley de Newton:\n\n\\[ F = ma = 5\\ kg \\cdot 3\\ m/s^2 = 15\\ N \\]" } },
+                         { front: { title: "Problema: Fuerza Gravitatoria", content: "¿Cuál es la fuerza de gravedad que actúa sobre un cuerpo de 15 kg (g=10 m/s²) (en N)?" }, back: { content: "150", solution: "Fuerza de gravedad:\n\n\\[ F_g = mg = 15\\ kg \\cdot 10\\ m/s^2 = 150\\ N \\]" } },
+                         { front: { title: "Problema: Peso", content: "¿Cuál es el peso de un cuerpo de 8 kg en reposo sobre una superficie horizontal (g=10 m/s²) (en N)?" }, back: { content: "80", solution: "En reposo sobre una superficie horizontal, el peso $P$ es igual a la fuerza de gravedad:\n\n\\[ F_g = mg = 8 \\cdot 10 = 80\\ N \\]" } },
+                         { front: { title: "Problema: Gravitación Universal", content: "La masa de la Luna es aproximadamente 81 veces menor que la masa de la Tierra, y el radio de la Luna es aproximadamente 3.7 veces menor que el radio de la Tierra. ¿Cuántas veces es menor la aceleración de la gravedad en la Luna en comparación con la Tierra?" }, back: { content: "6", solution: "Aceleración de la gravedad:\n\n\\[ g = \\frac{GM}{R^2} \\]\n\nRelación de aceleraciones Luna/Tierra:\n\n\\[ \\frac{g_{L}}{g_{T}} = \\frac{M_{L}}{M_{T}} \\div \\left( \\frac{R_{L}}{R_{T}} \\right)^2 = \\frac{1}{81} \\div \\left( \\frac{1}{3.7} \\right)^2 \\approx \\frac{1}{81} \\div \\frac{1}{13.69} = \\frac{13.69}{81} \\approx \\frac{1}{6} \\]\n\nLa aceleración en la Luna es aproximadamente 6 veces menor." } },
+                         { front: { title: "Problema: Momento Lineal", content: "Un cuerpo de 0.5 kg se mueve a una velocidad de 8 m/s. ¿Cuál es su momento lineal (en kg·m/s)?" }, back: { content: "4", solution: "Momento lineal:\n\n\\[ p = mv = 0.5\\ kg \\cdot 8\\ m/s = 4\\ kg\\cdot m/s \\]" } },
+                         { front: { title: "Problema: Impulso", content: "Una fuerza de 10 N actuó sobre un cuerpo durante 3 s. ¿Cuánto cambió el momento lineal del cuerpo (en kg·m/s)?" }, back: { content: "30", solution: "El cambio en el momento lineal es igual al impulso de la fuerza:\n\n\\[ \\Delta p = F \\Delta t = 10\\ N \\cdot 3\\ s = 30\\ N\\cdot s = 30\\ kg\\cdot m/s \\]" } },
+                         { front: { title: "Problema: Conservación del Momento", content: "Dos bolas de plastilina con masas de 6 kg y 4 kg se mueven una hacia la otra a velocidades de 3 m/s y 2 m/s, respectivamente. ¿Cuál es la magnitud de su velocidad después de una colisión perfectamente inelástica (en m/s)?" }, back: { content: "1", solution: "Eje X hacia la derecha. Bola de 6 kg se mueve a la derecha (v1=3), bola de 4 kg se mueve a la izquierda (v2=-2).\n\nMomento inicial:\n\n\\[ p_1 = m_1 v_1 = 6 \\cdot 3 = 18 \\]\n\\[ p_2 = m_2 v_2 = 4 \\cdot (-2) = -8 \\]\n\nMomento inicial total:\n\n\\[ p_{inicial} = 18 - 8 = 10\\ kg\\cdot m/s \\]\n\nDespués de la colisión, masa total $m = 6 + 4 = 10$ kg. Velocidad final $v$.\n\nConservación del momento:\n\n\\[ p_{inicial} = p_{final} \\Rightarrow 10 = 10v \\Rightarrow v = 1\\ m/s \\]" } },
+                         { front: { title: "Problema: Trabajo", content: "Una fuerza de 20 N movió un cuerpo 5 m en la dirección de la fuerza. ¿Qué trabajo se realizó (en J)?" }, back: { content: "100", solution: "$W = F s \\cos(0^\circ) = 20\\ N \\cdot 5\\ m \\cdot 1 = 100\\ J$" } },
+                         { front: { title: "Problema: Energía Cinética", content: "Un cuerpo de masa 4 kg se mueve a una velocidad de 10 m/s. ¿Cuál es su energía cinética (en J)?" }, back: { content: "200", solution: "Energía cinética:\n\n\\[ E_k = \\frac{mv^2}{2} = \\frac{4 \\cdot 10^2}{2} = 200\\ J \\]" } },
+                         { front: { title: "Problema: Energía Potencial", content: "Un cuerpo de masa 2 kg se eleva a una altura de 5 m. ¿Cuál es su energía potencial (g=10 m/s²) (en J)?" }, back: { content: "100", solution: "Energía potencial:\n\n\\[ E_p = mgh = 2 \\cdot 10 \\cdot 5 = 100\\ J \\]" } },
+                         { front: { title: "Problema: Ley de Ohm", content: "El voltaje a través de una resistencia es de 12 V, su resistencia es de 3 Ω. ¿Cuál es la corriente (en A)?" }, back: { content: "4", solution: "Corriente según la ley de Ohm:\n\n\\[ I = \\frac{V}{R} = \\frac{12\\ V}{3\\ \\Omega} = 4\\ A \\]" } },
+                         { front: { title: "Problema: Potencia Eléctrica", content: "La corriente en una lámpara es de 0.5 A, el voltaje es de 220 V. ¿Cuál es la potencia de la lámpara (en W)?" }, back: { content: "110", solution: "Potencia:\n\n\\[ P = VI = 220\\ V \\cdot 0.5\\ A = 110\\ W \\]" } },
+                         { front: { title: "Problema: Ley de Coulomb", content: "¿Cuántas veces cambia la fuerza de interacción entre dos cargas si la distancia entre ellas se reduce a la mitad?" }, back: { content: "4", solution: "La fuerza de interacción es inversamente proporcional al cuadrado de la distancia:\n\n\\[ F \\sim \\frac{1}{r^2} \\]\n\nSi $r$ se reduce a la mitad, $r^2$ disminuye en un factor de 4. La fuerza aumenta en un factor de 4." } },
+                         { front: { title: "Problema: Cantidad de Calor", content: "La capacidad calorífica específica del agua es 4200 J/(kg·°C). ¿Cuánto calor (en kJ) se necesita para calentar 0.5 kg de agua en 20 °C?" }, back: { content: "42", solution: "Calor:\n\n\\[ Q = cm\\Delta T = 4200 \\cdot 0.5 \\cdot 20 = 42000\\ J = 42\\ kJ \\]" } },
+                         { front: { title: "Problema: Carga Eléctrica", content: "Una carga de 120 C pasó a través de un conductor en 1 minuto. ¿Cuál es la corriente en el conductor (en A)?" }, back: { content: "2", solution: "Tiempo $t = 1\\ min = 60\\ s$. Corriente:\n\n\\[ I = \\frac{\\Delta q}{\\Delta t} = \\frac{120\\ C}{60\\ s} = 2\\ A \\]" } },
+                         { front: { title: "Problema: Frecuencia", content: "Un objeto realizó 50 oscilaciones en 10 segundos. ¿Cuál es la frecuencia de las oscilaciones (en Hz)?" }, back: { content: "5", solution: "Frecuencia:\n\n\\[ f = \\frac{N}{t} = \\frac{50}{10} = 5\\ Hz \\]" } },
+                         { front: { title: "Problema: Longitud de Onda", content: "La velocidad del sonido en el aire es 340 m/s. ¿Cuál es la longitud de onda del sonido con una frecuencia de 170 Hz (en m)?" }, back: { content: "2", solution: "Longitud de onda:\n\n\\[ \\lambda = \\frac{v}{f} = \\frac{340\\ m/s}{170\\ Hz} = 2\\ m \\]" } }
+                    ]
+                },
+                kk: {
+  title: 'Физика: Негіздері',
+  description: 'Терминдерді үйреніңіз және есептерді шешіңіз',
+  deckType: 'combined',
+  termsCards: [
+    { front: { title: "Ньютонның бірінші заңы", content: "Инерция заңын тұжырымдаңыз." }, back: { title: "Инерция заңы", formula:"$\\vec{F} = 0 \\implies \\vec{v} = const$", units:"Жылдамдық (м/с)", vars:"$\\vec{F}$ - нәтижелік күш, $\\vec{v}$ - жылдамдық", content:"Инерциялық жүйелерде денеге сыртқы күш әсер етпесе, ол тыныштықта қалады немесе бірқалыпты қозғалады." } },
+    { front: { title: "Ньютонның екінші заңы", content: "Динамиканың негізгі заңы." }, back: { title: "F = ma", formula:"$\\vec{F} = m\\vec{a}$", units:"Күш (Н), масса (кг), үдеу (м/с²)", vars:"$\\vec{F}$ - нәтижелік күш, $m$ - масса, $\\vec{a}$ - үдеу", content:"Дененің үдеуі денеге әсер ететін нәтижелік күшке тікелей пропорционал және массаға кері пропорционал." } },
+    { front: { title: "Ньютонның үшінші заңы", content: "Дене өзара әрекеттесу заңы." }, back: { title: "Әрекет = Қарсы әрекет", formula:"$\\vec{F}_{1} = -\\vec{F}_{2}$", units:"Күш (Н)", vars:"$\\vec{F}_{1}$ - 2-дененің 1-денеге әсер ететін күші", content:"Әрбір әрекетке тең және қарама-қарсы бағытта қарсы әрекет болады." } },
+    { front: { title: "Жалпы тартылыс заңы", content: "Массалардың өзара әрекеттесуі қалай жүреді?" }, back: { title: "Гравитация", formula:"$F = G \\frac{m_1 m_2}{R^2}$", units:"Күш (Н), масса (кг), қашықтық (м)", vars:"G - гравитациялық тұрақты ($≈6.67×10^{-11}$ Н·м²/кг²), $m_1,m_2$ - массалар, $R$ - қашықтық", content:"Кез келген екі дене массаларының көбейтіндісіне пропорционал күшпен тартылады және қашықтық квадратына кері пропорционал." } },
+    { front: { title: "Дененің салмағы", content: "Опораға түсетін күш." }, back: { title: "P = mg (тыныштықта)", formula:"$\\vec{P} = m(\\vec{g} - \\vec{a})$", units:"Салмақ (Н), масса (кг), үдеу (м/с²)", vars:"$m$ - масса, $\\vec{g}$ - еркін түсу үдеуі, $\\vec{a}$ - опора үдеуі", content:"Дененің жердің тартылысынан опораға түсіретін күші." } },
+    { front: { title: "Дене импульсі", content: "Механикалық қозғалыс мөлшері." }, back: { title: "Қозғалыс мөлшері", formula:"$\\vec{p} = m\\vec{v}$", units:"кг·м/с", vars:"$m$ - масса, $\\vec{v}$ - жылдамдық", content:"Дененің массасы мен жылдамдығының көбейтіндісі." } },
+    { front: { title: "Күш импульсі", content: "Күштің әсер ету уақытының әсері." }, back: { title: "Импульстің өзгерісі", formula:"$\\Delta \\vec{p} = \\vec{F} \\Delta t$", units:"Н·с немесе кг·м/с", vars:"$\\vec{F}$ - күш, $\\Delta t$ - әсер ету уақыты", content:"Күш пен әсер ету уақытының көбейтіндісі дене импульсінің өзгерісіне тең." } },
+    { front: { title: "Импульстің сақталуы", content: "Жабық жүйеде не сақталады?" }, back: { title: "Жалпы импульс", formula:"$\\sum \\vec{p}_{бұрын} = \\sum \\vec{p}_{кейін}$", units:"кг·м/с", vars:"$\\vec{p}$ - импульс", content:"Жабық жүйеде барлық денелердің импульстерінің векторлық қосындысы өзгермейді." } },
+    { front: { title: "Кинетикалық энергия", content: "Қозғалыстағы дененің энергиясы." }, back: { title: "Қозғалыс энергиясы", formula:"$E_k = \\frac{mv^2}{2}$", units:"Джоуль (Дж)", vars:"$m$ - масса, $v$ - жылдамдық", content:"Дененің қозғалысынан туындайтын энергия." } },
+    { front: { title: "Потенциалдық энергия", content: "Тартылыс өрісіндегі дененің орналасу энергиясы." }, back: { title: "Позициялық энергия", formula:"$E_p = mgh$", units:"Джоуль (Дж)", vars:"$m$ - масса, $g$ - еркін түсу үдеуі, $h$ - биіктік", content:"Дененің тартылыс өрісіндегі орналасуына байланысты энергиясы." } },
+    { front: { title: "Энергияның сақталуы заңы", content: "Негізгі табиғи заң." }, back: { title: "Механикалық энергия", formula:"$E_k + E_p = const$", units:"Джоуль (Дж)", vars:"$E_k$ - кинетикалық энергия, $E_p$ - потенциалдық энергия", content:"Жабық жүйеде тек консервативті күштер әсер еткенде толық механикалық энергия тұрақты." } },
+    { front: { title: "Толқын ұзындығы", content: "Шоқтардың ара қашықтығы." }, back: { title: "λ", formula:"$\\lambda = vT = \\frac{v}{f}$", units:"метр (м)", vars:"$v$ - толқын жылдамдығы, $T$ - период, $f$ - жиілік", content:"Толқынның екі ілгерілеген нүктесі арасындағы қашықтық." } },
+    { front: { title: "Тербеліс жиілігі", content: "Тербелістер қаншалықты жиі болады?" }, back: { title: "f немесе ν", formula:"$f = \\frac{1}{T}$", units:"Герц (Гц)", vars:"$T$ - период", content:"Берілген уақыт бірлігіне жасалған толық тербелістер саны." } },
+    { front: { title: "Ваккумдағы жарық жылдамдығы", content: "Шекті жылдамдық." }, back: { title: "c", formula:"$c \\approx 3 \\times 10^8$ м/с", units:"м/с", vars:"$c$ - жарық жылдамдығы", content:"Уақыт кеңістіктегі ақпараттың ең жоғары таралу жылдамдығы." } },
+    { front: { title: "Күш (мощность)", content: "Жұмыстың орындалу жылдамдығы." }, back: { title: "N немесе P", formula:"$N = \\frac{A}{t} = Fv \\cos(\\alpha)$", units:"Ватт (Вт)", vars:"$A$ - жұмыс, $t$ - уақыт, $F$ - күш, $v$ - жылдамдық, $\\alpha$ - бұрыш", content:"Белгілі бір уақыт аралығында орындалған жұмыстың шамасы." } },
+    { front: { title: "Күш жұмысы", content: "Күштің ығыстыруға әсері." }, back: { title: "A", formula:"$A = Fs \\cos(\\alpha)$", units:"Джоуль (Дж)", vars:"$F$ - күш, $s$ - ығысу, $\\alpha$ - бұрыш", content:"Күш денені белгілі қашықтыққа ығыстырғанда орындалатын жұмыс." } },
+    { front: { title: "Жылу балансы теңдеуі", content: "Жабық жүйедегі жылу алмасу." }, back: { title: "ΣQ = 0", formula:"$\\sum Q_i = 0$", units:"Джоуль (Дж)", vars:"$Q$ - жылу мөлшері", content:"Жабық жүйеде барлық берілген және қабылданған жылу сомасы нөлге тең." } },
+    { front: { title: "Ом заңы", content: "Ток, кернеу және кедергі қатынасы." }, back: { title: "I = U / R", formula:"$I = \\frac{U}{R}$", units:"Ампер (А)", vars:"$I$ - ток күші, $U$ - кернеу, $R$ - кедергі", content:"Ток кернеуге тура пропорционал және кедергіге кері пропорционал." } },
+    { front: { title: "Кулон заңы", content: "Нүктелік зарядтар өзара қалай әрекеттеседі?" }, back: { title: "Электростатикалық күш", formula:"$F = k \\frac{|q_1 q_2|}{r^2}$", units:"Ньютон (Н)", vars:"$k$≈$9×10^9$ Н·м²/Кл², $q_1,q_2$ - зарядтар, $r$ - қашықтық", content:"Екі заряд арасындағы пайда болған тартылыс немесе итеру күші зарядтардың көбейтіндісіне пропорционал." } },
+    { front: { title: "Электр тогы", content: "Зарядтардың реттелген қозғалысы." }, back: { title: "Ток күші", formula:"$I = \\frac{\\Delta q}{\\Delta t}$", units:"Ампер (А)", vars:"$\\Delta q$ - өткен заряд, $\\Delta t$ - уақыт", content:"Өткізгіш арқылы өткен зарядтың уақытқа қатынасы." } }
+  ],
+  problemsCards: [
+    { front: { title: "Есеп: Жылдамдық", content: "Автомобиль 2 сағатта 180 км жол жүрді. Оның орташа жылдамдығы қандай (км/сағ)?" }, back: { content: "90", solution: "Орташа жылдамдық: $$v_{орташа} = \\frac{S}{t} = \\frac{180}{2} = 90\\ \\frac{км}{сағ}$$" } },
+    { front: { title: "Есеп: Үдеу", content: "Поезд 72 км/сағ жылдамдықтан тежеліп, 20 с ішінде тоқтады. Үдеудің шамасы қандай (м/с²)?" }, back: { content: "1", solution: "Жылдамдықты м/с-ке ауыстыру: $$v_0 = 72\\ \\frac{км}{сағ} = 20\\ \\frac{м}{с}$$ Үдеу: $$a = \\frac{0 - 20}{20} = -1\\ \\frac{м}{с^2},\\;|a| = 1\\ \\frac{м}{с^2}$$" } },
+    { front: { title: "Есеп: Ығысу", content: "Дене бастапқы жылдамдығы 5 м/с, үдеуі 2 м/с². 4 с ішінде қандай қашықтық өтеді (м)?" }, back: { content: "36", solution: "$$S = v_0 t + \\frac{a t^2}{2} = 5·4 + \\frac{2·16}{2} = 20 + 16 = 36\\ м$$" } },
+    { front: { title: "Есеп: Екінші заң", content: "5 кг массалы дене 3 м/с² үдеумен қозғалады. Денеге әсер ететін күш қандай (Н)?" }, back: { content: "15", solution: "$$F = ma = 5·3 = 15\\ Н$$" } },
+    { front: { title: "Есеп: Тартылыс күші", content: "15 кг массалы денеге әсер ететін тартылыс күші қандай (g=10 м/с²)?" }, back: { content: "150", solution: "$$F_g = mg = 15·10 = 150\\ Н$$" } },
+    { front: { title: "Есеп: Салмақ", content: "8 кг массалы дене көлденең жазықтықта тұрғанда оның салмағы қандай (Н)?" }, back: { content: "80", solution: "$$P = mg = 8·10 = 80\\ Н$$" } },
+    { front: { title: "Есеп: Жалпы тартылыс", content: "Ай массасы Жер массасына қарағанда 81 есе аз, ал радиусы 3.7 есе кіші. Айдағы еркін түсу үдеуі қанша есе аз?" }, back: { content: "6", solution: "$$\\frac{g_{Ай}}{g_{Жер}} = \\frac{1/81}{(1/3.7)^2} ≈ \\frac{1}{6}$$" } },
+    { front: { title: "Есеп: Импульс", content: "0.5 кг массалы дене 8 м/с жылдамдықпен қозғалады. Оның импульсі қандай (кг·м/с)?" }, back: { content: "4", solution: "$$p = mv = 0.5·8 = 4\\ кг·м/с$$" } },
+    { front: { title: "Есеп: Күш импульсі", content: "10 Н күш 3 с әсер етті. Импульс қалай өзгерді (кг·м/с)?" }, back: { content: "30", solution: "$$\\Delta p = F \\Delta t = 10·3 = 30\\ кг·м/с$$" } },
+    { front: { title: "Есеп: Импульстің сақталуы", content: "6 кг және 4 кг массалы екі пластилин шар қарама-қарсы 3 м/с және 2 м/с жылдамдықпен ұшады. Қатысты иілгіш соққыдан кейін олардың ортақ жылдамдығы қандай (м/с)?" }, back: { content: "1", solution: "Алғашқы импульс: $$p_1=6·3=18,\;p_2=4·(-2)=-8,\;p_{жалпы}=10$$ Масса=10 кг, сондықтан $$v=10/10=1\\ м/с$$" } },
+    { front: { title: "Есеп: Жұмыс", content: "20 Н күш 5 м ығыстырды. Қандай жұмыс атқарылды (Дж)?" }, back: { content: "100", solution: "$$A = Fs\\cos0° = 20·5 = 100\\ Дж$$" } },
+    { front: { title: "Есеп: Кинетикалық энергия", content: "4 кг массалы дене 10 м/с жылдамдықпен қозғалады. Энергиясы қандай (Дж)?" }, back: { content: "200", solution: "$$E_k = \\frac{mv^2}{2} = \\frac{4·10^2}{2} = 200\\ Дж$$" } },
+    { front: { title: "Есеп: Потенциалдық энергия", content: "2 кг массалы дене 5 м биіктікке көтерілді. Энергиясы қандай (g=10 м/с²)?" }, back: { content: "100", solution: "$$E_p = mgh = 2·10·5 = 100\\ Дж$$" } },
+    { front: { title: "Есеп: Ом заңы", content: "12 В кернеу, 3 Ом кедергі. Ток күші қандай (А)?" }, back: { content: "4", solution: "$$I = \\frac{V}{R} = \\frac{12}{3} = 4\\ A$$" } },
+    { front: { title: "Есеп: Электр қуаты", content: "Лампаға 0.5 А ток, 220 В кернеу берілді. Қуаты қандай (Вт)?" }, back: { content: "110", solution: "$$P = VI = 220·0.5 = 110\\ Вт$$" } },
+    { front: { title: "Есеп: Кулон заңы", content: "Қашықтық 2 есе қысқарса, күш қанша есе өзгереді?" }, back: { content: "4", solution: "$$F \\sim \\frac{1}{r^2},\\;r\\to r/2\\Rightarrow F\\to4F$$" } },
+    { front: { title: "Есеп: Жылу мөлшері", content: "Судың жылу сыйымдылығы 4200 Дж/(кг·°C). 0.5 кг суды 20 °C-қа қыздыруға қанша жылу (кДж) қажет?" }, back: { content: "42", solution: "$$Q = cm\\Delta T = 4200·0.5·20 = 42000\\ Дж = 42\\ кДж$$" } },
+    { front: { title: "Есеп: Заряд", content: "1 минут ішінде өткізгіш арқылы 120 Кл заряд өтті. Ток күші қандай (А)?" }, back: { content: "2", solution: "$$I = \\frac{\\Delta q}{\\Delta t} = \\frac{120}{60} = 2\\ A$$" } },
+    { front: { title: "Есеп: Жиілік", content: "50 тербеліс 10 с ішінде орындалды. Жиілігі қандай (Гц)?" }, back: { content: "5", solution: "$$f = \\frac{N}{t} = \\frac{50}{10} = 5\\ Гц$$" } },
+    { front: { title: "Есеп: Толқын ұзындығы", content: "Ауадағы дыбыс жылдамдығы 340 м/с. 170 Гц дыбыстың толқын ұзындығы қандай (м)?" }, back: { content: "2", solution: "$$\\lambda = \\frac{v}{f} = \\frac{340}{170} = 2\\ м$$" } }
+  ]
+}
+
+            }
+        };
+        let allDecks = {};
+        let customDecks = {};
+        let currentDeckId = null;
+        let currentDeckData = null;
+        let currentDeckCards = [];
+        let termsDeck = [];
+        let problemsDeck = [];
+        let originalTermsDeck = [];
+        let originalProblemsDeck = [];
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        let isShuffled = false;
+        let currentLanguage = 'en';
+        let currentMode = 'flashcard';
+        let stats = { reviewed: 0, correct: 0, streak: 0, maxStreak: 0, badgesEarned: [] };
+        let earnedBadges = new Set();
+        let viewedTermCardIndices = new Set();
+        let totalAttempts = 0;
+        let totalCorrect = 0;
+        let quizAttemptsInSession = 0;
+        let quizCorrectInSession = 0;
+        let problemAttemptsInSession = 0;
+        let problemCorrectInSession = 0;
+        let termInputCounter = 0;
+        let problemInputCounter = 0;
+        let quizAnswered = false;
+        let timerInterval = null;
+        let timerStartTime = 0;
+        let elapsedSeconds = 0;
+        let isMusicPlaying = false;
+        let musicVolume = 0.4;
+
+        const flashcardEl = document.getElementById('flashcard');
+        const front = flashcardEl?.querySelector('.flashcard-front');
+        const back = flashcardEl?.querySelector('.flashcard-back');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const flipBtn = document.getElementById('flipBtn');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const progressBar = document.getElementById('progressBar');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const chooseDeckBtn = document.getElementById('chooseDeckBtn');
+        const deckModal = document.getElementById('deckModal');
+        const deckList = document.getElementById('deckList');
+        const themeToggle = document.getElementById('themeToggle');
+        const languageToggle = document.getElementById('languageToggle');
+        const languageMenu = document.getElementById('languageMenu');
+        const modeCards = document.querySelectorAll('.mode-card');
+        const flashcardModeCard = document.getElementById('flashcardModeCard');
+        const quizModeCard = document.getElementById('quizModeCard');
+        const problemsModeCard = document.getElementById('problemsModeCard');
+        const quizOptionsContainer = document.getElementById('quizOptions');
+        const problemSolverContainer = document.getElementById('problemSolverContainer');
+        const problemAnswerInput = document.getElementById('problemAnswerInput');
+        const submitProblemAnswerBtn = document.getElementById('submitProblemAnswer');
+        const answerFeedback = document.getElementById('answerFeedback');
+        const cardsReviewedStat = document.getElementById('cardsReviewed');
+        const correctAnswersStat = document.getElementById('correctAnswers');
+        const totalAttemptsStat = document.getElementById('totalAttempts');
+        const accuracyStat = document.getElementById('accuracy');
+        const streakCountStat = document.getElementById('streakCount');
+        const resetStatsBtn = document.getElementById('resetStatsBtn');
+        const badgeNotification = document.getElementById('badgeNotification');
+        const badgeDescription = badgeNotification?.querySelector('p#badgeDescription');
+        const createDeckBtn = document.getElementById('createDeckBtn');
+        const createDeckModal = document.getElementById('createDeckModal');
+        const createDeckForm = document.getElementById('createDeckForm');
+        const deckTitleInput = document.getElementById('deckTitleInput');
+        const deckDescInput = document.getElementById('deckDescInput');
+        const deckTypeInput = document.getElementById('deckTypeInput');
+        const termsSection = document.getElementById('termsSection');
+        const problemsSection = document.getElementById('problemsSection');
+        const termsInputContainer = document.getElementById('termsInputContainer');
+        const problemsInputContainer = document.getElementById('problemsInputContainer');
+        const addAnotherTermBtn = document.getElementById('addAnotherTermBtn');
+        const addAnotherProblemBtn = document.getElementById('addAnotherProblemBtn');
+        const createDeckModalTitle = document.getElementById('createDeckModalTitle');
+        const achievementsBtn = document.getElementById('achievementsBtn');
+        const achievementsModal = document.getElementById('achievementsModal');
+        const achievementsList = document.getElementById('achievementsList');
+        const currentDeckDisplay = document.getElementById('currentDeckDisplay');
+        const currentDeckLabelSpan = currentDeckDisplay?.querySelector('span');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const musicToggleBtn = document.getElementById('musicToggleBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const aboutBtn = document.getElementById('aboutBtn');
+        const aboutModal = document.getElementById('aboutModal');
+        const resetAchievementsBtn = document.getElementById('resetAchievementsBtn');
+
+        function renderMathJax() {
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                const elementsToTypeset = [flashcardEl, quizOptionsContainer, answerFeedback].filter(el => el && document.body.contains(el));
+                if (elementsToTypeset.length > 0) {
+                    MathJax.typesetPromise(elementsToTypeset);
+                }
+            }
+        }
+
+        function loadCustomDecksFromLocalStorage() {
+            const storedDecks = localStorage.getItem('customFlashcardDecks');
+            if (storedDecks) {
+                try {
+                    customDecks = JSON.parse(storedDecks);
+                    return customDecks;
+                } catch (e) {
+                    customDecks = {};
+                    localStorage.removeItem('customFlashcardDecks');
+                    return {};
+                }
+            }
+            customDecks = {};
+            return {};
+        }
+
+        function saveCustomDecksToLocalStorage() {
+            try {
+                localStorage.setItem('customFlashcardDecks', JSON.stringify(customDecks));
+            } catch (e) {
+                alert("Ошибка сохранения колоды. Возможно, хранилище переполнено.");
+            }
+        }
+
+        function combineAllDecks() {
+            const loadedCustomDecks = loadCustomDecksFromLocalStorage();
+            const clonedPredefined = JSON.parse(JSON.stringify(predefinedDecksMultiLang));
+            allDecks = { ...clonedPredefined, ...loadedCustomDecks };
+        }
+
+        function updateLanguage(lang) {
+            if (!languages[lang]) lang = 'ru';
+            currentLanguage = lang;
+            localStorage.setItem('flashcardLang', lang);
+            document.documentElement.lang = lang;
+            document.title = languages[lang]?.['html-title'] || "Flashcards";
+
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.getAttribute('data-lang-key');
+                const translation = languages[lang]?.[key];
+                if (translation !== undefined) {
+                     if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.placeholder !== undefined) el.placeholder = translation;
+                     else if (el.tagName === 'OPTION') el.textContent = translation;
+                     else if (el.title && (el.id === 'languageToggle' || el.id === 'themeToggle' || el.id === 'resetStatsBtn' || el.classList.contains('delete-term-btn') || el.classList.contains('delete-problem-btn') || el.classList.contains('delete-deck-btn') || el.classList.contains('close-modal'))) { el.title = translation; if (el.ariaLabel) el.ariaLabel = translation;}
+                     else if (el.tagName === 'BUTTON' && el.querySelector('span[data-lang-key]')) { const span = el.querySelector('span[data-lang-key]'); if(span && span.dataset.langKey === key) span.textContent = translation; }
+                     else if (el.id === 'currentDeckDisplay' && currentDeckLabelSpan) { el.firstChild.textContent = translation + ' '; }
+                     else el.textContent = translation;
+                }
+            });
+            if (currentDeckId && allDecks[currentDeckId]) {
+                loadDeck(currentDeckId);
+            } else {
+                updateCard();
+            }
+
+            if (shuffleBtn) shuffleBtn.textContent = languages[currentLanguage]?.[isShuffled ? 'original-order' : 'shuffle'] || (isShuffled ? 'По порядку' : 'Перемешать');
+            if (currentDeckId && currentDeckLabelSpan) currentDeckLabelSpan.textContent = currentDeckData?.title || currentDeckId;
+            else if (currentDeckLabelSpan) currentDeckLabelSpan.textContent = '';
+            updateMusicButton();
+            if (currentDeckId) { updateCard(); if (currentMode === 'quiz') generateQuizOptions(); }
+            else showInitialMessage();
+
+            if (deckModal?.style.display === 'flex') populateDeckList();
+            if (createDeckModal?.style.display === 'flex') updateLanguageForElement(createDeckModal);
+            if (achievementsModal?.style.display === 'flex') populateAchievementsList();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function updateCard() {
+            if (!flashcardEl || !front || !back) return;
+            if (!currentDeckCards || currentDeckCards.length === 0) { updateButtonStates(true); return; }
+            if (currentCardIndex >= currentDeckCards.length) currentCardIndex = 0;
+            if (currentCardIndex < 0) currentCardIndex = 0;
+
+            const card = currentDeckCards[currentCardIndex];
+            if (!card || !card.front || !card.back) {
+                front.innerHTML = '<h2>Ошибка</h2><p>Данные карты неверны</p>';
+                back.innerHTML = '';
+                updateButtonStates(true);
+                return;
+            }
+
+            if ((currentMode === 'flashcard' || currentMode === 'quiz')) {
+                 const originalIndex = originalTermsDeck.findIndex(c => c === card);
+                 if (originalIndex !== -1 && !viewedTermCardIndices.has(originalIndex)) {
+                    viewedTermCardIndices.add(originalIndex);
+                    stats.reviewed = viewedTermCardIndices.size;
+                    if (cardsReviewedStat) cardsReviewedStat.textContent = stats.reviewed;
+                 }
+             }
+
+            flashcardEl.classList.remove('flipped'); isFlipped = false;
+            flashcardEl.classList.remove('card-animation'); void flashcardEl.offsetWidth; flashcardEl.classList.add('card-animation');
+            front.innerHTML = ''; back.innerHTML = '';
+
+            const isProblemMode = currentMode === 'problems';
+            const isQuizMode = currentMode === 'quiz';
+
+            if (isProblemMode) {
+                front.innerHTML = `
+                    <h2 class="flashcard-term-topic">${card.front.title || languages[currentLanguage]['problem-header'] || 'Задача'}</h2>
+                    <p class="flashcard-problem-text">${card.front.content || ''}</p>`;
+                back.innerHTML = `
+                    <div class="flashcard-back-section">
+                        <strong>${languages[currentLanguage]['problem-answer-label'] || 'Ответ:'}</strong>
+                        <div class="flashcard-problem-answer">${card.back.content || '-'}</div>
+                    </div>`;
+            } else {
+                front.innerHTML = `
+                    <h2 class="flashcard-term-topic">${card.front.title || ''}</h2>
+                    <p class="flashcard-term-prompt">${card.front.content || ''}</p>`;
+                back.innerHTML = `
+                    <div class="flashcard-back-section"><strong>${languages[currentLanguage]['card-back-formula-label'] || 'Формула:'}</strong><div class="flashcard-back-content">${card.back.formula || '-'}</div></div>
+                    <div class="flashcard-back-section"><strong>${languages[currentLanguage]['card-back-units-label'] || 'Ед. изм.:'}</strong><div class="flashcard-back-content">${card.back.units || '-'}</div></div>
+                    <div class="flashcard-back-section"><strong>${languages[currentLanguage]['card-back-vars-label'] || 'Обозначения:'}</strong><div class="flashcard-back-content">${card.back.vars || '-'}</div></div>
+                    <div class="flashcard-back-section"><strong>${languages[currentLanguage]['card-back-content-label'] || 'Объяснение:'}</strong><div class="flashcard-back-content">${card.back.content || '-'}</div></div>`;
+            }
+
+            renderMathJax();
+            updateModeUI();
+            hideAnswerFeedback();
+            quizAnswered = false;
+            updateProgressBar();
+            updateButtonStates();
+        }
+
+        function showInitialMessage() {
+            if (!flashcardEl || !front || !back) return;
+            flashcardEl.classList.remove('flipped'); isFlipped = false;
+            front.innerHTML = `<h2 class="flashcard-term-topic" data-lang-key="start-title">${languages[currentLanguage]['start-title']}</h2><p class="flashcard-term-prompt" data-lang-key="start-content">${languages[currentLanguage]['start-content']}</p>`;
+            back.innerHTML = `<h2 data-lang-key="ready-title">${languages[currentLanguage]['ready-title']}</h2><p data-lang-key="ready-content">${languages[currentLanguage]['ready-content']}</p>`;
+            if (quizOptionsContainer) quizOptionsContainer.style.display = 'none';
+            if (problemSolverContainer) problemSolverContainer.style.display = 'none';
+            hideAnswerFeedback();
+            renderMathJax();
+            updateProgressBar(true);
+            updateButtonStates(true);
+            if (currentDeckLabelSpan) currentDeckLabelSpan.textContent = '';
+            stopTimer();
+            resetTimerDisplay();
+        }
+
+        function resetAchievements() {
+            if (confirm(languages[currentLanguage]['confirm-reset-achievements'] || 'Are you sure you want to reset all achievements? This cannot be undone.')) {
+                earnedBadges.clear();
+                stats.badgesEarned = [];
+                localStorage.removeItem('earnedBadgeIds');
+                localStorage.removeItem('earnedBadgesData');
+                populateAchievementsList();
+                alert(languages[currentLanguage]['achievements-reset-success'] || 'Achievements have been reset.');
+            }
+        }
+
+        function updateProgressBar(reset = false) {
+            if (!progressBar) return;
+            if (reset || !currentDeckCards || currentDeckCards.length === 0) {
+                progressBar.style.width = '0%';
+            } else {
+                const progress = ((currentCardIndex + 1) / currentDeckCards.length) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+        }
+
+        function updateButtonStates(reset = false) {
+            const noCardsLoaded = !currentDeckCards || currentDeckCards.length === 0;
+            if (prevBtn) prevBtn.disabled = reset || noCardsLoaded || currentCardIndex === 0;
+            if (nextBtn) nextBtn.disabled = reset || noCardsLoaded;
+            if (flipBtn) flipBtn.disabled = reset || noCardsLoaded || currentMode !== 'flashcard';
+            if (shuffleBtn) {
+                shuffleBtn.disabled = reset || noCardsLoaded;
+                shuffleBtn.textContent = languages[currentLanguage]?.[isShuffled ? 'original-order' : 'shuffle'] || (isShuffled ? 'По порядку' : 'Перемешать');
+            }
+        }
+
+        function updateModesAvailability(hasTerms, hasProblems) {
+            if (!flashcardModeCard || !quizModeCard || !problemsModeCard) return;
+
+            flashcardModeCard.classList.toggle('disabled', !hasTerms);
+            quizModeCard.classList.toggle('disabled', !hasTerms);
+            problemsModeCard.classList.toggle('disabled', !hasProblems);
+
+            const currentModeCard = document.querySelector(`.mode-card[data-mode="${currentMode}"]`);
+            if (currentModeCard && currentModeCard.classList.contains('disabled')) {
+                if (hasTerms) {
+                    switchMode('flashcard');
+                } else if (hasProblems) {
+                    switchMode('problems');
+                } else {
+                    modeCards.forEach(card => card.classList.add('disabled'));
+                }
+            } else if (currentModeCard) {
+                modeCards.forEach(card => card.classList.remove('active'));
+                currentModeCard.classList.add('active');
+            }
+        }
+
+        function flipCard() {
+            if (currentMode === 'flashcard' && currentDeckCards?.length > 0 && flashcardEl) {
+                flashcardEl.classList.toggle('flipped');
+                isFlipped = !isFlipped;
+            }
+        }
+
+        function nextCard() {
+            if (!currentDeckCards?.length) return;
+            if (currentCardIndex < currentDeckCards.length - 1) {
+                currentCardIndex++;
+                updateCard();
+            } else {
+                checkPerfectionBadge(currentMode);
+                checkBadgeCompletion();
+                currentCardIndex = 0;
+                updateCard();
+            }
+        }
+
+        function prevCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                updateCard();
+            }
+        }
+
+        function toggleShuffle() {
+            let deckToShuffle = (currentMode === 'problems') ? problemsDeck : termsDeck;
+            let originalDeck = (currentMode === 'problems') ? originalProblemsDeck : originalTermsDeck;
+
+            if (!deckToShuffle || deckToShuffle.length < 2) return;
+
+            isShuffled = !isShuffled;
+            if (isShuffled) {
+                currentDeckCards = shuffleArray([...deckToShuffle]);
+            } else {
+                currentDeckCards = [...originalDeck];
+            }
+            currentCardIndex = 0;
+            updateCard();
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function updateTimerDisplay() {
+            if (timerDisplay) {
+                timerDisplay.textContent = formatTime(elapsedSeconds);
+            }
+        }
+
+        function resetTimerDisplay() {
+            if (timerDisplay) {
+                timerDisplay.textContent = formatTime(0);
+                timerDisplay.classList.remove('visible');
+            }
+        }
+
+        function startTimer() {
+            stopTimer();
+            if (timerDisplay) timerDisplay.classList.add('visible');
+            timerStartTime = Date.now();
+            elapsedSeconds = 0;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                elapsedSeconds = Math.floor((Date.now() - timerStartTime) / 1000);
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            if (timerDisplay) timerDisplay.classList.remove('visible');
+        }
+
+        function resetTimer() {
+            stopTimer();
+            elapsedSeconds = 0;
+            resetTimerDisplay();
+        }
+
+        function loadDeck(deckId) {
+            checkPerfectionBadge(currentMode);
+            const rawDeckData = allDecks[deckId];
+            if (!rawDeckData) { 
+                currentDeckId = null;
+                showInitialMessage(); 
+                updateModesAvailability(false, false); 
+                return; 
+            }
+
+            currentDeckData = rawDeckData[currentLanguage] || rawDeckData['ru'] || Object.values(rawDeckData).find(d => typeof d === 'object' && (d.cards || d.termsCards || d.problemsCards)) || rawDeckData;
+            if (!currentDeckData || typeof currentDeckData !== 'object') {
+                currentDeckId = null;
+                showInitialMessage();
+                updateModesAvailability(false, false);
+                return;
+            }
+
+            currentDeckId = deckId;
+            localStorage.setItem('lastDeckId', deckId);
+            const deckType = currentDeckData.deckType || 'terms';
+            const deckTitle = currentDeckData.title || deckId;
+            termsDeck = []; problemsDeck = []; originalTermsDeck = []; originalProblemsDeck = [];
+            currentCardIndex = 0; isShuffled = false;
+            viewedTermCardIndices.clear();
+            resetStats();
+            quizAttemptsInSession = 0; quizCorrectInSession = 0;
+            problemAttemptsInSession = 0; problemCorrectInSession = 0;
+
+            if (deckType === 'combined') { termsDeck = currentDeckData.termsCards || []; problemsDeck = currentDeckData.problemsCards || []; }
+            else if (deckType === 'terms') { termsDeck = currentDeckData.cards || []; }
+            else if (deckType === 'problems') { problemsDeck = currentDeckData.cards || []; }
+            originalTermsDeck = [...termsDeck]; originalProblemsDeck = [...problemsDeck];
+
+            const hasTerms = termsDeck.length > 0;
+            const hasProblems = problemsDeck.length > 0;
+
+            stopTimer();
+            resetTimerDisplay();
+            let initialMode = 'flashcard';
+
+            if (hasTerms) {
+                initialMode = 'flashcard';
+                currentDeckCards = [...termsDeck];
+            }
+            else if (hasProblems) {
+                initialMode = 'problems';
+                currentDeckCards = [...problemsDeck];
+            }
+            else { 
+                initialMode = 'flashcard';
+                currentDeckCards = [];
+            }
+
+            currentMode = initialMode;
+
+            if (currentDeckLabelSpan) currentDeckLabelSpan.textContent = deckTitle;
+            else if (currentDeckDisplay) currentDeckDisplay.firstChild.textContent = (languages[currentLanguage]['current-deck-label'] || 'Текущая колода:') + ' ';
+
+            if (currentDeckCards.length > 0) {
+                updateCard();
+            } else {
+                showInitialMessage();
+            }
+            updateModesAvailability(hasTerms, hasProblems);
+
+            if (currentMode === 'quiz' || currentMode === 'problems') {
+                startTimer();
+            }
+        }
+
+        function updateStats(type, mode) {
+            let updateAccuracyDisplay = false;
+            let justIncrementedAttempts = false;
+
+            if (mode === 'quiz') {
+                quizAttemptsInSession++;
+                if (type === 'correct') quizCorrectInSession++;
+            } else if (mode === 'problems') {
+                problemAttemptsInSession++;
+                if (type === 'correct') problemCorrectInSession++;
+            }
+
+            if (type === 'correct') {
+                totalCorrect++;
+                stats.streak++;
+                stats.maxStreak = Math.max(stats.maxStreak, stats.streak);
+                if (!justIncrementedAttempts) {
+                    totalAttempts++;
+                    justIncrementedAttempts = true;
+                }
+                updateAccuracyDisplay = true;
+            } else if (type === 'incorrect') {
+                stats.streak = 0;
+                 if (!justIncrementedAttempts) {
+                    totalAttempts++;
+                    justIncrementedAttempts = true;
+                }
+                updateAccuracyDisplay = true;
+            }
+
+            if (correctAnswersStat) correctAnswersStat.textContent = totalCorrect;
+            if (streakCountStat) streakCountStat.textContent = stats.streak;
+            if (totalAttemptsStat) totalAttemptsStat.textContent = totalAttempts;
+            if (updateAccuracyDisplay && accuracyStat) {
+                const accuracyValue = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(0) : 0;
+                accuracyStat.textContent = `${accuracyValue}%`;
+            }
+
+            if (justIncrementedAttempts) {
+                checkBadges();
+            }
+        }
+
+        function populateDeckList() {
+            if (!deckList) return;
+            deckList.innerHTML = '';
+            const deckEntries = Object.entries(allDecks);
+            deckEntries.sort(([idA, deckA], [idB, deckB]) => {
+                const isAPredefined = predefinedDecksMultiLang.hasOwnProperty(idA);
+                const isBPredefined = predefinedDecksMultiLang.hasOwnProperty(idB);
+                if (isAPredefined && !isBPredefined) return -1;
+                if (!isAPredefined && isBPredefined) return 1;
+                const titleA = (deckA[currentLanguage]?.title || deckA['ru']?.title || deckA.title || idA).toLowerCase();
+                const titleB = (deckB[currentLanguage]?.title || deckB['ru']?.title || deckB.title || idB).toLowerCase();
+                return titleA.localeCompare(titleB);
+            });
+
+            deckEntries.forEach(([deckId, deckData]) => {
+                const langContent = deckData[currentLanguage] || deckData['ru'] || Object.values(deckData).find(d => typeof d === 'object' && (d.cards || d.termsCards || d.problemsCards)) || deckData;
+                if (!langContent || typeof langContent !== 'object') {
+                    return;
+                }
+                const title = langContent.title || deckId;
+                const description = langContent.description || "";
+                const deckType = langContent.deckType || 'terms';
+                const isCustom = customDecks.hasOwnProperty(deckId);
+                let cardCount = 0;
+                if (deckType === 'combined') {
+                    cardCount = (langContent.termsCards?.length || 0) + (langContent.problemsCards?.length || 0);
+                } else if (deckType === 'terms') {
+                    cardCount = langContent.cards?.length || langContent.termsCards?.length || 0;
+                } else if (deckType === 'problems') {
+                    cardCount = langContent.cards?.length || langContent.problemsCards?.length || 0;
+                }
+                let typeKey = 'deck-type-terms';
+                if (deckType === 'problems') typeKey = 'deck-type-problems';
+                else if (deckType === 'combined') typeKey = 'deck-type-combined';
+                const typeText = languages[currentLanguage]?.[typeKey] || deckType;
+
+                const li = document.createElement('li');
+                li.classList.add('deck-item');
+                li.dataset.deckId = deckId;
+                const deleteBtnTitle = `${languages[currentLanguage]?.['confirm-delete'] || 'Удалить колоду'} ${title}`;
+                li.innerHTML = `
+                    <h3 class="deck-title">${title} <span style="font-size:0.8em; color: #888;">(${typeText})</span></h3>
+                    <p class="deck-info">${description}</p>
+                    <p class="deck-info">${cardCount} карт(ы)</p>
+                    ${isCustom ? `<button class="delete-deck-btn" data-deck-id="${deckId}" aria-label="${deleteBtnTitle}" title="${deleteBtnTitle}">🗑️</button>` : ''}
+                `;
+                li.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-deck-btn')) return;
+                    loadDeck(deckId);
+                    if (deckModal) deckModal.style.display = 'none';
+                });
+                const deleteBtn = li.querySelector('.delete-deck-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        handleDeleteDeck(deckId);
+                    });
+                }
+                deckList.appendChild(li);
+            });
+            if (deckEntries.length === 0) {
+                deckList.innerHTML = `<li data-lang-key="no-decks-available">${languages[currentLanguage]?.['no-decks-available'] || 'Нет доступных колод.'}</li>`;
+            }
+        }
+
+        function handleDeleteDeck(deckId) {
+            if (!customDecks[deckId]) return;
+            const deckTitleToDelete = (customDecks[deckId][currentLanguage]?.title || customDecks[deckId]['ru']?.title || customDecks[deckId].title || deckId);
+            if (confirm(`${languages[currentLanguage]?.['confirm-delete'] || 'Удалить колоду'} "${deckTitleToDelete}"?`)) {
+                delete customDecks[deckId];
+                delete allDecks[deckId];
+                saveCustomDecksToLocalStorage();
+                populateDeckList();
+                if (currentDeckId === deckId) {
+                    currentDeckId = null;
+                    currentDeckData = null;
+                    currentDeckCards = [];
+                    termsDeck = []; problemsDeck = [];
+                    originalTermsDeck = []; originalProblemsDeck = [];
+                    const firstDeckId = Object.keys(allDecks)[0];
+                    if (firstDeckId) {
+                        loadDeck(firstDeckId);
+                    } else {
+                        showInitialMessage();
+                        updateModesAvailability(false, false);
+                    }
+                }
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            if (themeToggle) themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+            localStorage.setItem('flashcardTheme', isDarkMode ? 'dark' : 'light');
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('flashcardTheme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                if (themeToggle) themeToggle.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                if (themeToggle) themeToggle.textContent = '🌙';
+            }
+        }
+
+        function initializeLanguage() {
+            const savedLang = localStorage.getItem('flashcardLang') || navigator.language.split('-')[0] || 'ru';
+            updateLanguage(languages[savedLang] ? savedLang : 'ru');
+        }
+
+        function initializeDecks() {
+            combineAllDecks();
+            const lastDeckId = localStorage.getItem('lastDeckId');
+            let deckToLoad = null;
+
+            if (lastDeckId && allDecks[lastDeckId]) {
+                deckToLoad = lastDeckId;
+            } else {
+                const firstDeckId = Object.keys(allDecks)[0];
+                if(firstDeckId) {
+                    deckToLoad = firstDeckId;
+                }
+            }
+
+            if (deckToLoad) {
+                loadDeck(deckToLoad);
+            } else {
+                showInitialMessage();
+                updateModesAvailability(false, false);
+            }
+        }
+
+        function updateModeUI() {
+            hideAnswerFeedback();
+            if (problemAnswerInput) problemAnswerInput.value = '';
+            quizAnswered = false;
+
+            const isQuiz = currentMode === 'quiz';
+            const isProblems = currentMode === 'problems';
+            const isFlashcard = currentMode === 'flashcard';
+
+            if (quizOptionsContainer) quizOptionsContainer.style.display = isQuiz ? 'flex' : 'none';
+            if (problemSolverContainer) problemSolverContainer.style.display = isProblems ? 'block' : 'none';
+            if (flipBtn) flipBtn.style.display = isFlashcard ? 'inline-flex' : 'none';
+
+            if (isQuiz) generateQuizOptions();
+        }
+
+        function switchMode(newMode) {
+            const targetCard = document.querySelector(`.mode-card[data-mode="${newMode}"]`);
+            if (!targetCard || targetCard.classList.contains('disabled') || currentMode === newMode) return;
+
+            const oldMode = currentMode;
+
+            checkPerfectionBadge(oldMode);
+
+            currentMode = newMode;
+
+            modeCards.forEach(card => card.classList.remove('active'));
+            targetCard.classList.add('active');
+
+            if (newMode === 'quiz') { quizAttemptsInSession = 0; quizCorrectInSession = 0; }
+            if (newMode === 'problems') { problemAttemptsInSession = 0; problemCorrectInSession = 0; }
+
+            isShuffled = false;
+            if (newMode === 'problems') { currentDeckCards = [...originalProblemsDeck]; }
+            else { currentDeckCards = [...originalTermsDeck]; }
+
+            currentCardIndex = 0;
+
+            if (newMode === 'quiz' || newMode === 'problems') {
+                resetTimer();
+                startTimer();
+            } else {
+                stopTimer();
+                resetTimerDisplay();
+            }
+             updateCard();
+         }
+
+        function generateQuizOptions() {
+            if (!quizOptionsContainer) return;
+            quizOptionsContainer.innerHTML = '';
+             const deckSource = originalTermsDeck;
+             const currentTermCard = currentDeckCards[currentCardIndex];
+            if (!deckSource || deckSource.length === 0 || !currentTermCard?.back?.content) {
+                quizOptionsContainer.innerHTML = `<p>${languages[currentLanguage]?.['no-options'] || 'Нет доступных вариантов.'}</p>`;
+                return;
+            }
+            const correctAnswer = currentTermCard.back.content;
+            let options = [correctAnswer];
+            let attempts = 0;
+            const maxOptions = Math.min(4, deckSource.length);
+            while (options.length < maxOptions && attempts < deckSource.length * 3) {
+                const randomIndex = Math.floor(Math.random() * deckSource.length);
+                const potentialCard = deckSource[randomIndex];
+                const potentialAnswer = potentialCard?.back?.content;
+                if (potentialAnswer && potentialAnswer !== correctAnswer && !options.includes(potentialAnswer)) {
+                    options.push(potentialAnswer);
+                }
+                attempts++;
+            }
+            shuffleArray(options);
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.classList.add('quiz-option', 'button-style');
+                 button.textContent = option;
+                button.onclick = () => checkQuizAnswer(option === correctAnswer, button);
+                quizOptionsContainer.appendChild(button);
+            });
+             renderMathJax();
+        }
+
+        function checkQuizAnswer(isCorrect, selectedButton) {
+            if (quizAnswered || !currentDeckCards?.length) return;
+            quizAnswered = true;
+            showAnswerFeedback(isCorrect);
+            updateStats(isCorrect ? 'correct' : 'incorrect', 'quiz');
+
+            const correctAnswerText = currentDeckCards[currentCardIndex].back.content;
+            quizOptionsContainer.querySelectorAll('.quiz-option').forEach(btn => {
+                btn.disabled = true;
+                const isBtnCorrectAnswer = (btn.textContent === correctAnswerText);
+                if (btn === selectedButton) btn.classList.add(isCorrect ? 'correct' : 'incorrect');
+                else if (isBtnCorrectAnswer && !isCorrect) btn.classList.add('correct');
+            });
+        }
+
+        function checkProblemAnswer() {
+            if (currentMode !== 'problems' || !currentDeckCards?.length || !currentDeckCards[currentCardIndex]?.back?.content || !problemAnswerInput) return;
+            const userAnswerStr = problemAnswerInput.value.trim();
+            const correctAnswerStr = String(currentDeckCards[currentCardIndex].back.content).trim();
+            if (userAnswerStr === "") { showAnswerFeedback(false, correctAnswerStr); updateStats('incorrect', 'problems'); return; }
+            const userNum = parseFloat(userAnswerStr.replace(',', '.'));
+            const correctNum = parseFloat(correctAnswerStr.replace(',', '.'));
+            let isCorrect = false;
+            if (!isNaN(userNum) && !isNaN(correctNum)) isCorrect = Math.abs(userNum - correctNum) < 0.001;
+            else isCorrect = userAnswerStr.toLowerCase() === correctAnswerStr.toLowerCase();
+            showAnswerFeedback(isCorrect, isCorrect ? null : correctAnswerStr);
+            updateStats(isCorrect ? 'correct' : 'incorrect', 'problems');
+        }
+
+        function showAnswerFeedback(isCorrect, correctAnswerText = null) {
+            if(!answerFeedback) return;
+            answerFeedback.style.display = 'block';
+            let feedbackTextKey = isCorrect ? 'correct-feedback' : 'incorrect-feedback';
+            let feedbackText = languages[currentLanguage]?.[feedbackTextKey] || (isCorrect ? 'Correct! ✓' : 'Incorrect ✗');
+            let solutionHTML = '';
+            const currentCard = currentDeckCards[currentCardIndex];
+             
+            if (!isCorrect && correctAnswerText != null) {
+                feedbackText += ` <span class="correct-answer-text">"${correctAnswerText}"</span>`;
+            }
+
+            if (!isCorrect && currentMode === 'problems' && currentCard?.back?.solution) {
+                const solutionText = currentCard.back.solution;
+                solutionHTML = `
+                <div class="problem-solution">
+                  <strong>${languages[currentLanguage]['problem-solution-label'] || 'Решение:'}</strong><br>
+                  <div class="math-small-wrapper">
+                    <div class="math-small">${solutionText}</div>
+                  </div>
+                </div>`;
+            }
+            answerFeedback.innerHTML = feedbackText + solutionHTML;
+            answerFeedback.className = 'answer-feedback';
+            answerFeedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+            renderMathJax();
+        }
+
+        function hideAnswerFeedback() {
+            if (answerFeedback) answerFeedback.style.display = 'none';
+        }
+
+        function resetStats() {
+            stats = { reviewed: 0, streak: 0, maxStreak: 0, badgesEarned: stats.badgesEarned };
+            viewedTermCardIndices.clear();
+
+            totalAttempts = 0;
+            totalCorrect = 0;
+
+            if (cardsReviewedStat) cardsReviewedStat.textContent = '0';
+            if (correctAnswersStat) correctAnswersStat.textContent = '0';
+            if (accuracyStat) accuracyStat.textContent = '0%';
+            if (streakCountStat) streakCountStat.textContent = '0';
+            if (totalAttemptsStat) totalAttemptsStat.textContent = '0';
+
+            if (currentDeckId) {
+                currentCardIndex = 0;
+                isShuffled = false;
+                if (currentMode === 'problems') currentDeckCards = [...originalProblemsDeck];
+                else currentDeckCards = [...originalTermsDeck];
+                updateProgressBar();
+                updateButtonStates();
+                hideAnswerFeedback();
+            } else {
+                updateProgressBar(true);
+                updateButtonStates(true);
+            }
+        }
+
+        function checkBadges() {
+            const streakBadges = [
+                { id: 'streak-5', threshold: 5, key: 'streak-5-desc', titleKey: 'streak-title', icon: '🔥' },
+                { id: 'streak-10', threshold: 10, key: 'streak-10-desc', titleKey: 'streak-title', icon: '🌟' },
+                { id: 'streak-15', threshold: 15, key: 'streak-15-desc', titleKey: 'streak-title', icon: '🚀' },
+                { id: 'streak-20', threshold: 20, key: 'streak-20-desc', titleKey: 'streak-title', icon: '🎯' },
+                { id: 'streak-25', threshold: 25, key: 'streak-25-desc', titleKey: 'streak-title', icon: '🏆' },
+                { id: 'streak-30', threshold: 30, key: 'streak-30-desc', titleKey: 'streak-title', icon: '🎖️' },
+                { id: 'streak-35', threshold: 35, key: 'streak-35-desc', titleKey: 'streak-title', icon: '💎' },
+                { id: 'streak-40', threshold: 40, key: 'streak-40-desc', titleKey: 'streak-title', icon: '⚡' },
+                { id: 'streak-45', threshold: 45, key: 'streak-45-desc', titleKey: 'streak-title', icon: '⚡' },
+                { id: 'streak-50', threshold: 50, key: 'streak-50-desc', titleKey: 'streak-title', icon: '👑' }
+            ];
+
+            streakBadges.forEach(badge => {
+                if (stats.streak >= badge.threshold && !earnedBadges.has(badge.id)) {
+                     awardBadge(badge.id, badge.titleKey, badge.key, badge.icon, { threshold: badge.threshold });
+                }
+            });
+
+            const attemptsBadges = [
+                { id: 'attempts-10', threshold: 10, key: 'attempts-10-desc', titleKey: 'attempts-title', icon: '🟢' },
+                { id: 'attempts-100', threshold: 100, key: 'attempts-100-desc', titleKey: 'attempts-title', icon: '💯' },
+                { id: 'attempts-150', threshold: 150, key: 'attempts-150-desc', titleKey: 'attempts-title', icon: '🏅' },
+                { id: 'attempts-200', threshold: 200, key: 'attempts-200-desc', titleKey: 'attempts-title', icon: '🎖️' },
+                { id: 'attempts-250', threshold: 250, key: 'attempts-250-desc', titleKey: 'attempts-title', icon: '👑' }
+            ];
+
+            attemptsBadges.forEach(badge => {
+                if (totalAttempts >= badge.threshold && !earnedBadges.has(badge.id)) {
+                     awardBadge(badge.id, badge.titleKey, badge.key, badge.icon, { threshold: badge.threshold });
+                }
+            });
+        }
+
+        function checkPerfectionBadge(modeToCheck) {
+            if (!currentDeckId) return;
+
+            let attempts = 0;
+            let correct = 0;
+            let badgeId = '';
+            let titleKey = '';
+            let descKey = '';
+
+            if (modeToCheck === 'quiz' && originalTermsDeck.length > 0) {
+                attempts = quizAttemptsInSession;
+                correct = quizCorrectInSession;
+                badgeId = `perfection-quiz-${currentDeckId}`;
+                titleKey = 'perfection-quiz-title';
+                descKey = 'perfection-quiz-desc';
+            } else if (modeToCheck === 'problems' && originalProblemsDeck.length > 0) {
+                attempts = problemAttemptsInSession;
+                correct = problemCorrectInSession;
+                badgeId = `perfection-problems-${currentDeckId}`;
+                titleKey = 'perfection-problems-title';
+                descKey = 'perfection-problems-desc';
+            }
+            if (badgeId && attempts > 0 && correct === attempts && !earnedBadges.has(badgeId)) {
+                const requiredCount = (modeToCheck === 'quiz') ? originalTermsDeck.length : originalProblemsDeck.length;
+                if (correct === requiredCount) {
+                   awardBadge(badgeId, titleKey, descKey);
+                }
+            }
+         }
+
+        function checkBadgeCompletion() {
+            if (currentMode === 'flashcard' && originalTermsDeck?.length > 0 && currentCardIndex === originalTermsDeck.length - 1) {
+                const badgeId = `completed-<span class="math-inline">\{currentDeckId\}\-</span>{currentMode}`;
+                if (!earnedBadges.has(badgeId)) {
+                    awardBadge(badgeId, 'deck-completed-title-base', 'deck-completed-desc', '🎉', { deckTitle: currentDeckData?.title || currentDeckId });
+                }
+            }
+        }
+
+        function awardBadge(id, titleLangKey, descLangKey, icon = '🏆', dynamicData = null) {
+            if (earnedBadges.has(id)) return;
+            
+            const badgeData = {
+                id: id,
+                titleKey: titleLangKey,
+                descKey: descLangKey,
+                icon: icon,
+                dynamic: dynamicData,
+                timestamp: Date.now()
+            };
+
+            earnedBadges.add(id);
+            if (!stats.badgesEarned.some(b => b.id === id)) {
+                 stats.badgesEarned.push(badgeData);
+            }
+
+            showBadgeNotification(translateBadge(badgeData));
+
+            saveEarnedBadges();
+
+            if (achievementsModal?.style.display === 'flex') {
+                populateAchievementsList();
+            }
+        }
+        function translateBadge(badgeData) {
+            if (!badgeData) return { name: '?', description: '?', icon: '?' };
+
+            const lang = languages[currentLanguage] || languages['ru'];
+
+            let name = `${badgeData.icon || '🏆'} ${lang[badgeData.titleKey] || badgeData.titleKey}`;
+            let description = lang[badgeData.descKey] || badgeData.descKey;
+
+            if (badgeData.dynamic?.deckTitle && badgeData.titleKey === 'deck-completed-title-base') {
+                name += ` (${badgeData.dynamic.deckTitle})`;
+            }
+            if (badgeData.dynamic?.threshold) {
+                description = description.replace('{threshold}', badgeData.dynamic.threshold);
+            }
+        
+            if (badgeData.descKey === 'deck-completed-desc') {
+                description = lang['deck-completed-desc'] || description;
+            }
+        
+            return {
+                id: badgeData.id,
+                name: name,
+                description: description,
+                icon: badgeData.icon
+            };
+        }
+
+        function populateAchievementsList() {
+            if (!achievementsList) return;
+            achievementsList.innerHTML = '';
+            loadEarnedBadges();
+            if (stats.badgesEarned.length === 0) {
+                achievementsList.innerHTML = `<li class="no-achievements" data-lang-key="no-achievements-yet">${languages[currentLanguage]['no-achievements-yet']}</li>`;
+            } else {
+                const sortedBadges = stats.badgesEarned.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                sortedBadges.forEach(storedBadgeData => {
+                    const translatedBadge = translateBadge(storedBadgeData);
+                    const li = document.createElement('li');
+                    li.classList.add('achievement-item');
+                    li.innerHTML = `
+                        <div class="achievement-icon">${translatedBadge.icon || '🏆'}</div>
+                        <div class="achievement-details">
+                            <h4>${translatedBadge.name}</h4>
+                            <p>${translatedBadge.description}</p>
+                        </div>
+                    `;
+                    achievementsList.appendChild(li);
+                });
+            }
+            const resetButtonInModal = document.getElementById('resetAchievementsBtn');
+            if (resetButtonInModal) {
+                resetButtonInModal.replaceWith(resetButtonInModal.cloneNode(true));
+                document.getElementById('resetAchievementsBtn')?.addEventListener('click', resetAchievements);
+                updateLanguageForElement(document.getElementById('resetAchievementsBtn')?.parentElement);
+            }
+        }
+
+        function saveEarnedBadges() {
+            localStorage.setItem('earnedBadgeIds', JSON.stringify(Array.from(earnedBadges)));
+            localStorage.setItem('earnedBadgesData', JSON.stringify(stats.badgesEarned));
+        }
+
+        function loadEarnedBadges() {
+            try {
+                const storedIds = localStorage.getItem('earnedBadgeIds');
+                const storedData = localStorage.getItem('earnedBadgesData');
+                if (storedIds) {
+                    earnedBadges = new Set(JSON.parse(storedIds));
+                } else {
+                     earnedBadges = new Set();
+                }
+                if (storedData) {
+                    stats.badgesEarned = JSON.parse(storedData);
+                } else {
+                    stats.badgesEarned = [];
+                }
+            } catch (e) {
+                earnedBadges = new Set();
+                stats.badgesEarned = [];
+            }
+        }
+
+        function showBadgeNotification(translatedBadgeData) {
+            if (!badgeNotification || !badgeDescription) return;
+
+            const titleEl = badgeNotification.querySelector('h3');
+            const iconEl = badgeNotification.querySelector('.badge-icon');
+
+            if(titleEl) titleEl.textContent = translatedBadgeData.name;
+            if(iconEl) iconEl.textContent = translatedBadgeData.icon || '🏆';
+            badgeDescription.textContent = translatedBadgeData.description;
+
+            badgeNotification.style.display = 'block';
+            setTimeout(() => { if (badgeNotification) badgeNotification.style.display = 'none'; }, 4000);
+        }
+
+        function updateLanguageForElement(element) {
+            element?.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.getAttribute('data-lang-key');
+                const translation = languages[currentLanguage]?.[key];
+                if (translation !== undefined) {
+                    if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.placeholder !== undefined) {
+                        el.placeholder = translation;
+                    }
+                    if (el.tagName === 'LABEL' || el.tagName === 'BUTTON' || el.tagName === 'H3' || el.tagName === 'H4' || el.tagName === 'OPTION') {
+                        const firstChild = el.firstChild;
+                        if (firstChild && firstChild.nodeType === Node.TEXT_NODE) {
+                            firstChild.textContent = translation;
+                        } else if (el.childNodes.length > 0 && el.childNodes[0].nodeType === Node.TEXT_NODE) {
+                             el.childNodes[0].textContent = translation;
+                        } else {
+                             el.textContent = translation;
+                        }
+                    }
+                     if (el.title) el.title = translation;
+                     if (el.ariaLabel) el.ariaLabel = translation;
+                }
+            });
+        }
+
+        function renumberTermHeaders() {
+            const termInputDivs = termsInputContainer?.querySelectorAll('.term-inputs');
+            termInputDivs?.forEach((div, index) => {
+                const header = div.querySelector('.term-header');
+                const deleteBtn = div.querySelector('.delete-term-btn');
+                const newNumber = index + 1;
+                const termText = languages[currentLanguage]?.['term-header'] || 'Термин';
+                if (header) header.textContent = `${termText} ${newNumber}`;
+                if (deleteBtn) {
+                    const deleteText = `${languages[currentLanguage]?.['delete-term'] || 'Удалить Термин'} ${newNumber}`;
+                    deleteBtn.setAttribute('aria-label', deleteText);
+                    deleteBtn.setAttribute('title', deleteText);
+                }
+                div.querySelectorAll('input, textarea').forEach(input => {
+                    const baseId = input.id.replace(/\d+$/, '');
+                    input.id = `${baseId}${newNumber}`;
+                    const label = div.querySelector(`label[for^="${baseId}"]`);
+                    if (label) label.setAttribute('for', input.id);
+                });
+            });
+            termInputCounter = termInputDivs?.length || 0;
+        }
+
+        function renumberProblemHeaders() {
+            const problemInputDivs = problemsInputContainer?.querySelectorAll('.problem-inputs');
+            problemInputDivs?.forEach((div, index) => {
+                const header = div.querySelector('.problem-header');
+                const deleteBtn = div.querySelector('.delete-problem-btn');
+                const newNumber = index + 1;
+                const problemText = languages[currentLanguage]?.['problem-header'] || 'Задача';
+                if (header) header.textContent = `${problemText} ${newNumber}`;
+                if (deleteBtn) {
+                     const deleteText = `${languages[currentLanguage]?.['delete-problem'] || 'Удалить Задачу'} ${newNumber}`;
+                    deleteBtn.setAttribute('aria-label', deleteText);
+                    deleteBtn.setAttribute('title', deleteText);
+                }
+                 div.querySelectorAll('input, textarea').forEach(input => {
+                     const baseId = input.id.replace(/\d+$/, '');
+                     input.id = `${baseId}${newNumber}`;
+                     const label = div.querySelector(`label[for^="${baseId}"]`);
+                     if (label) label.setAttribute('for', input.id);
+                 });
+            });
+            problemInputCounter = problemInputDivs?.length || 0;
+        }
+
+        function addTermInputFields() {
+            if (!termsInputContainer) return;
+            termInputCounter++;
+            const div = document.createElement('div');
+            div.classList.add('term-inputs');
+            div.dataset.cardNumber = termInputCounter;
+            const deleteText = `${languages[currentLanguage]?.['delete-term'] || 'Удалить Термин'} ${termInputCounter}`;
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 class="term-header">${languages[currentLanguage]?.['term-header'] || 'Термин'} ${termInputCounter}</h4>
+                    <button type="button" class="delete-term-btn" aria-label="${deleteText}" title="${deleteText}">🗑️</button>
+                </div>
+                <label for="termFrontTitle${termInputCounter}" data-lang-key="card-front-title-label">${languages[currentLanguage]?.['card-front-title-label'] || 'Тема/Термин:'}</label>
+                <input type="text" id="termFrontTitle${termInputCounter}" class="term-front-title">
+                <label for="termFrontContent${termInputCounter}" data-lang-key="card-front-content-label">${languages[currentLanguage]?.['card-front-content-label'] || 'Вопрос/Описание:'}</label>
+                <textarea id="termFrontContent${termInputCounter}" class="term-front-content" required></textarea>
+                <label for="termBackFormula${termInputCounter}" data-lang-key="card-back-formula-label">${languages[currentLanguage]?.['card-back-formula-label'] || 'Формула:'}</label>
+                <textarea id="termBackFormula${termInputCounter}" class="term-back-formula"></textarea>
+                <label for="termBackUnits${termInputCounter}" data-lang-key="card-back-units-label">${languages[currentLanguage]?.['card-back-units-label'] || 'Ед. изм.:'}</label>
+                <input type="text" id="termBackUnits${termInputCounter}" class="term-back-units">
+                <label for="termBackVars${termInputCounter}" data-lang-key="card-back-vars-label">${languages[currentLanguage]?.['card-back-vars-label'] || 'Обозначения:'}</label>
+                <textarea id="termBackVars${termInputCounter}" class="term-back-vars"></textarea>
+                <label for="termBackContent${termInputCounter}" data-lang-key="card-back-content-label">${languages[currentLanguage]?.['card-back-content-label'] || 'Объяснение:'}</label>
+                <textarea id="termBackContent${termInputCounter}" class="term-back-content"></textarea>
+            `;
+            termsInputContainer.appendChild(div);
+            const deleteBtn = div.querySelector('.delete-term-btn');
+            deleteBtn?.addEventListener('click', () => { div.remove(); renumberTermHeaders(); });
+        }
+
+        function addProblemInputFields() {
+            if (!problemsInputContainer) return;
+            problemInputCounter++;
+            const div = document.createElement('div');
+            div.classList.add('problem-inputs');
+            div.dataset.cardNumber = problemInputCounter;
+            const deleteText = `${languages[currentLanguage]?.['delete-problem'] || 'Удалить Задачу'} ${problemInputCounter}`;
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 class="problem-header">${languages[currentLanguage]?.['problem-header'] || 'Задача'} ${problemInputCounter}</h4>
+                    <button type="button" class="delete-problem-btn" aria-label="${deleteText}" title="${deleteText}">🗑️</button>
+                </div>
+                <label for="problemTitle${problemInputCounter}" data-lang-key="problem-title-label">${languages[currentLanguage]?.['problem-title-label'] || 'Название задачи:'}</label>
+                <input type="text" id="problemTitle${problemInputCounter}" class="problem-title">
+                <label for="problemContent${problemInputCounter}" data-lang-key="problem-content-label">${languages[currentLanguage]?.['problem-content-label'] || 'Задача:'}</label>
+                <textarea id="problemContent${problemInputCounter}" class="problem-content" required></textarea>
+                <label for="problemAnswer${problemInputCounter}" data-lang-key="problem-answer-label">${languages[currentLanguage]?.['problem-answer-label'] || 'Ответ (число):'}</label>
+                <input type="text" id="problemAnswer${problemInputCounter}" class="problem-answer" required placeholder="${languages[currentLanguage]?.['input-placeholder'] || '0'}">
+            `;
+            problemsInputContainer.appendChild(div);
+            const deleteBtn = div.querySelector('.delete-problem-btn');
+            deleteBtn?.addEventListener('click', () => { div.remove(); renumberProblemHeaders(); });
+        }
+
+        function toggleDeckTypeSections() {
+            if (!deckTypeInput || !termsSection || !problemsSection) return;
+            const selectedType = deckTypeInput.value;
+            termsSection.style.display = (selectedType === 'terms' || selectedType === 'combined') ? 'block' : 'none';
+            problemsSection.style.display = (selectedType === 'problems' || selectedType === 'combined') ? 'block' : 'none';
+        }
+
+        function toggleMusic() {
+            if (!backgroundMusic) return;
+            if (isMusicPlaying) {
+                backgroundMusic.pause();
+            } else {
+                backgroundMusic.play();
+            }
+            isMusicPlaying = !isMusicPlaying;
+        
+            updateMusicButton();
+        
+            localStorage.setItem('musicPlaying', isMusicPlaying);
+        }
+
+        function setVolume(volume) {
+            if (!backgroundMusic) return;
+            musicVolume = parseFloat(volume);
+            backgroundMusic.volume = musicVolume;
+            localStorage.setItem('musicVolume', musicVolume);
+        }
+
+        function updateMusicButton() {
+            if (!musicToggleBtn) return;
+
+            let icon = '🔇';
+
+            if (isMusicPlaying) {
+                if (musicVolume >= 0.5) {
+                    icon = '🔊';
+                } else if (musicVolume > 0) {
+                    icon = '🔉';
+                }
+            }
+        
+            musicToggleBtn.textContent = icon;
+        
+            const titleKey = isMusicPlaying ? 'pause-music' : 'play-music';
+            musicToggleBtn.title = languages[currentLanguage]?.[titleKey] || (isMusicPlaying ? 'Pause' : 'Play');
+        }
+
+        function initializeMusic() {
+            if (!backgroundMusic || !volumeSlider) return;
+
+            const savedVolume = localStorage.getItem('musicVolume');
+            musicVolume = (savedVolume !== null) ? parseFloat(savedVolume) : 0.3;
+
+            volumeSlider.value = musicVolume;
+            backgroundMusic.volume = musicVolume;
+
+            const savedPlaying = localStorage.getItem('musicPlaying');
+            isMusicPlaying = savedPlaying === 'true';
+
+            updateMusicButton();
+        }
+
+        function createDeck(event) {
+            event.preventDefault();
+            if (!deckTitleInput || !deckTypeInput || !termsInputContainer || !problemsInputContainer) return;
+            const deckTitle = deckTitleInput.value.trim();
+            const deckDesc = deckDescInput?.value.trim() || '';
+            const deckType = deckTypeInput.value;
+            if (!deckTitle) {
+                alert(languages[currentLanguage]?.['deck-title-required'] || 'Название колоды обязательно.');
+                return;
+            }
+            const collectedTermsCards = [];
+            const collectedProblemsCards = [];
+            if (deckType === 'terms' || deckType === 'combined') {
+                termsInputContainer.querySelectorAll('.term-inputs').forEach((termDiv) => {
+                    const frontTitle = termDiv.querySelector('.term-front-title')?.value.trim();
+                    const frontContent = termDiv.querySelector('.term-front-content')?.value.trim();
+                    const backFormula = termDiv.querySelector('.term-back-formula')?.value.trim();
+                    const backUnits = termDiv.querySelector('.term-back-units')?.value.trim();
+                    const backVars = termDiv.querySelector('.term-back-vars')?.value.trim();
+                    const backContent = termDiv.querySelector('.term-back-content')?.value.trim();
+                    if (frontContent) {
+                        collectedTermsCards.push({ front: { title: frontTitle || '', content: frontContent }, back: { formula: backFormula || '', units: backUnits || '', vars: backVars || '', content: backContent || '' } });
+                    }
+                });
+            }
+            if (deckType === 'problems' || deckType === 'combined') {
+                problemsInputContainer.querySelectorAll('.problem-inputs').forEach((problemDiv) => {
+                    const title = problemDiv.querySelector('.problem-title')?.value.trim();
+                    const content = problemDiv.querySelector('.problem-content')?.value.trim();
+                    const answer = problemDiv.querySelector('.problem-answer')?.value.trim();
+                    if (content && answer) {
+                        collectedProblemsCards.push({ front: { title: title || '', content: content }, back: { content: answer } });
+                    }
+                });
+            }
+            if ((deckType === 'terms' && collectedTermsCards.length === 0) || (deckType === 'problems' && collectedProblemsCards.length === 0) || (deckType === 'combined' && collectedTermsCards.length === 0 && collectedProblemsCards.length === 0)) {
+                alert(languages[currentLanguage]?.['add-one-card-alert'] || 'Добавьте хотя бы один валидный термин или задачу.');
+                return;
+            }
+            const deckId = `custom-deck-${Date.now()}`;
+            const newDeckData = { title: deckTitle, description: deckDesc, deckType: deckType };
+            if (deckType === 'terms') newDeckData.cards = collectedTermsCards;
+            else if (deckType === 'problems') newDeckData.cards = collectedProblemsCards;
+            else { newDeckData.termsCards = collectedTermsCards; newDeckData.problemsCards = collectedProblemsCards; }
+            customDecks[deckId] = newDeckData;
+            saveCustomDecksToLocalStorage();
+            combineAllDecks();
+            populateDeckList();
+            alert(`${languages[currentLanguage]?.['deck-created-success'] || 'Колода'} "${deckTitle}" ${languages[currentLanguage]?.['created-successfully'] || 'успешно создана!'}`);
+            if (createDeckModal) createDeckModal.style.display = 'none';
+            loadDeck(deckId);
+            createDeckForm.reset();
+            termsInputContainer.innerHTML = ''; problemsInputContainer.innerHTML = '';
+            termInputCounter = 0; problemInputCounter = 0;
+            addTermInputFields(); addProblemInputFields();
+            toggleDeckTypeSections();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEarnedBadges();
+            initializeTheme();
+            initializeLanguage();
+            initializeDecks();
+
+            chooseDeckBtn?.addEventListener('click', () => {
+                if (deckModal) {
+                    populateDeckList();
+                    deckModal.style.display = 'flex';
+                }
+            });
+
+            createDeckBtn?.addEventListener('click', () => {
+                if (createDeckModal) {
+                    createDeckModal.style.display = 'flex';
+                }
+            });
+
+            achievementsBtn?.addEventListener('click', () => {
+                if (achievementsModal) {
+                    populateAchievementsList();
+                    achievementsModal.style.display = 'flex';
+                }
+            });
+
+            window.addEventListener('click', (e) => {
+                if (e.target === deckModal) deckModal.style.display = 'none';
+                if (e.target === createDeckModal) createDeckModal.style.display = 'none';
+                if (e.target === achievementsModal) achievementsModal.style.display = 'none';
+                if (e.target === aboutModal) aboutModal.style.display = 'none';
+                if (languageMenu && languageToggle &&
+                    !languageToggle.contains(e.target) &&
+                    !languageMenu.contains(e.target)) {
+                    languageMenu.style.display = 'none';
+                }
+            });
+
+            themeToggle?.addEventListener('click', toggleTheme);
+
+            languageToggle?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if(languageMenu) languageMenu.style.display = languageMenu.style.display === 'block' ? 'none' : 'block';
+            });
+
+            languageMenu?.addEventListener('click', (e) => {
+                const langOption = e.target.closest('.language-option');
+                if (langOption) {
+                    const lang = langOption.dataset.lang;
+                    if (lang && languages[lang]) { updateLanguage(lang); languageMenu.style.display = 'none'; }
+                }
+            });
+            aboutBtn?.addEventListener('click', () => {
+                if (aboutModal) {
+                    updateLanguageForElement(aboutModal);
+                    aboutModal.style.display = 'flex';
+                }
+            });
+            resetAchievementsBtn?.addEventListener('click', resetAchievements);
+            prevBtn?.addEventListener('click', prevCard);
+            nextBtn?.addEventListener('click', nextCard);
+            flipBtn?.addEventListener('click', flipCard);
+            shuffleBtn?.addEventListener('click', toggleShuffle);
+            modeCards.forEach(card => { card.addEventListener('click', () => { if (!card.classList.contains('disabled')) { const mode = card.dataset.mode; if(mode) switchMode(mode); } }); });
+            submitProblemAnswerBtn?.addEventListener('click', checkProblemAnswer);
+            problemAnswerInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkProblemAnswer(); });
+            problemAnswerInput?.addEventListener('input', hideAnswerFeedback);
+            resetStatsBtn?.addEventListener('click', resetStats);
+            volumeSlider.oninput = () => {
+                musicVolume = parseFloat(volumeSlider.value);
+                backgroundMusic.volume = musicVolume;
+                updateMusicButton();
+            };
+            createDeckForm?.addEventListener('submit', createDeck);
+            deckTypeInput?.addEventListener('change', toggleDeckTypeSections);
+            addAnotherTermBtn?.addEventListener('click', addTermInputFields);
+            addAnotherProblemBtn?.addEventListener('click', addProblemInputFields);
+            flashcardEl?.addEventListener('click', flipCard);
+            musicToggleBtn?.addEventListener('click', toggleMusic);
+            volumeSlider?.addEventListener('input', (e) => setVolume(e.target.value));
+            const startMusicInteraction = () => {
+                if (isMusicPlaying && backgroundMusic?.paused) {
+                    backgroundMusic.play();
+                }
+                document.body.removeEventListener('click', startMusicInteraction);
+                document.body.removeEventListener('keydown', startMusicInteraction);
+            };
+            document.body.addEventListener('click', startMusicInteraction, { once: true });
+            document.body.addEventListener('keydown', startMusicInteraction, { once: true });
+            initializeMusic();
+
+        });
+    </script>
+</body>
+</html>
